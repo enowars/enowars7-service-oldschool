@@ -80,6 +80,7 @@ switch ($action) {
 
         echo $twig->render('register.twig', ['user' => $_SESSION['user'] ?? null]);
         break;
+
     case 'all_users':
         if (!isset($_SESSION['user']) || !$_SESSION['user']['is_admin']) {
             header('Location: index.php?action=login');
@@ -88,6 +89,7 @@ switch ($action) {
 
         echo $twig->render('all_users.twig', ['users' => $users]);
         break;
+
     case 'profile':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -121,7 +123,7 @@ switch ($action) {
 
         echo $twig->render('profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
         break;
-    // TODO: make add course feature accessible to everyone
+
     case 'courses':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -133,6 +135,7 @@ switch ($action) {
             $xmlContent = file_get_contents($xmlFile);
 
             $dom = new DOMDocument();
+            // TODO: make this less obvious
             $dom->loadXML($xmlContent, LIBXML_NOENT | LIBXML_DTDLOAD);
 
             $title = $dom->getElementsByTagName('title')->item(0)->nodeValue;
@@ -148,6 +151,7 @@ switch ($action) {
             echo $twig->render('forbidden.twig');
         }
         break;
+
     default:
         echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
 
