@@ -122,13 +122,13 @@ switch ($action) {
         echo $twig->render('profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
         break;
     // TODO: make add course feature accessible to everyone
-    case 'course':
+    case 'courses':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xml']) && $_SESSION['user']['is_admin']) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xml'])) {
             $xmlFile = $_FILES['xml']['tmp_name'];
             $xmlContent = file_get_contents($xmlFile);
 
