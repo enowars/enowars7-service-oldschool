@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Online Learning Platform</title>
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="index.php?action=home">Home</a>
+				<a href="index.php?action=login">Login</a>
+				<a href="index.php?action=register">Register</a>
+				{% if user %}
+					<a class="nav-link" href="index.php?action=profile&id={{ user.id }}">My Profile</a>
+				{% endif %}
+				{% if user.is_admin %}
+					<a href="index.php?action=all_users">All Users</a>
+				{% endif %}
+			</nav>
+		</header>
+		<main>
+			{% block content %}{% endblock %}
+		</main>
+	</body>
+</html>

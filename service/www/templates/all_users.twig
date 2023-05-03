@@ -1,0 +1,24 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+    <h2>All Users</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>View Profile</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td><a href="index.php?action=profile&id={{ user.id }}">View Profile</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
