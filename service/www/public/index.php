@@ -10,7 +10,7 @@ error_reporting(E_ALL);
 
 session_start();
 
-// TODO use actuall database
+// TODO use actual database
 $users = [
     [
         'id' => 1,
