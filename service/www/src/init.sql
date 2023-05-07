@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS users (
+	id INTEGER PRIMARY KEY,
+	username STRING NOT NULL UNIQUE,
+	password STRING NOT NULL,
+	is_admin INTEGER NOT NULL DEFAULT 0,
+	flag INTEGER DEFAULT NULL
+);
+
+-- CREATE TABLE IF NOT EXISTS courses (
+-- 	uid INTEGER SECONDARY KEY,
+-- 	file STRING NOT NULL,
+-- 	dir STRING NOT NULL,
+-- 	creat INTEGER NOT NULL,
+-- 	UNIQUE(uid, file) ON CONFLICT ABORT,
+-- 	FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE
+-- );
+
+-- INSERT OR IGNORE INTO users (uid, user, pass, auth, creat)
+-- 	VALUES (1, "catlover1998", "ILOVECATS123",
+-- 		hex(randomblob(16)), 9999999999);
