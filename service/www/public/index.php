@@ -62,14 +62,33 @@ function getDbConnection()
     return $dbh;
 }
 
-function updateProfile($user_index, $new_data)
+function updateProfile($userId, $profileData)
 {
-    global $users;
-    $_SESSION['users'][$user_index] = array_merge($users[$user_index], $new_data);
-    $users = $_SESSION['users'];
+    $dbh = getDbConnection();
+    $sql = 'UPDATE users SET ';
+    $params = [];
+    $first = true;
+
+    foreach ($profileData as $key => $value) {
+        if (!$first) {
+            $sql .= ', ';
+        } else {
+            $first = false;
+        }
+        $sql .= $key . ' = :' . $key;
+        $params[':' . $key] = $value;
+    }
+
+    $sql .= ' WHERE id = :userId';
+    $params[':userId'] = $userId;
+    $params[':password'] = password_hash($params[':password'], PASSWORD_DEFAULT);
+
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($params);
 }
 
 switch ($action) {
+    // TODO: update home to use db
     case 'home':
         echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
         break;
@@ -130,7 +149,7 @@ switch ($action) {
         echo $twig->render('register.twig', ['message' => $message ?? null]);
         break;
 
-
+    // TODO: update all_users to use db
     case 'all_users':
         if (!isset($_SESSION['user']) || !$_SESSION['user']['is_admin']) {
             header('Location: index.php?action=login');
@@ -148,32 +167,32 @@ switch ($action) {
 
         $profile_user = $_SESSION['user'];
         $profile_user_id = $_GET['id'] ?? null;
+        $dbh = getDbConnection();
 
         if (isset($profile_user_id) && $profile_user['is_admin']) {
-            foreach ($users as $key => $user) {
-                if ($user['id'] == $profile_user_id) {
-                    $profile_user = $user;
-                    $_SESSION['viewing_user_key'] = $key;
-                    break;
-                }
-            }
-        } else {
-            $_SESSION['viewing_user_key'] = array_search($profile_user['id'], array_column($users, 'id'));
+            $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
+            $stmt->bindParam(":id", $profile_user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $profile_user = $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && (!isset($profile_user_id) || !$profile_user['is_admin'])) {
             unset($_POST['id']);
             unset($_POST['submit']);
 
-            updateProfile($_SESSION['viewing_user_key'], $_POST);
-            $_SESSION['users'] = $users;
-            $_SESSION['user'] = $users[$_SESSION['viewing_user_key']];
+            updateProfile($_SESSION['user']['id'], $_POST);
+            // Update the user session with the new information
+            $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
+            $stmt->bindParam(":id", $_SESSION['user']['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $_SESSION['user'] = $stmt->fetch(PDO::FETCH_ASSOC);
             $profile_user = $_SESSION['user'];
         }
 
         echo $twig->render('profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
         break;
 
+    // TODO: add courses table, update courses to use db
     case 'courses':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
