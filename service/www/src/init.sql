@@ -7,14 +7,11 @@ CREATE TABLE IF NOT EXISTS users (
 	flag INTEGER DEFAULT NULL
 );
 
--- CREATE TABLE IF NOT EXISTS courses (
--- 	uid INTEGER SECONDARY KEY,
--- 	file STRING NOT NULL,
--- 	dir STRING NOT NULL,
--- 	creat INTEGER NOT NULL,
--- 	UNIQUE(uid, file) ON CONFLICT ABORT,
--- 	FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE
--- );
+CREATE TABLE IF NOT EXISTS courses (
+    id INTEGER PRIMARY KEY,
+    title STRING NOT NULL,
+    course_data TEXT NOT NULL
+);
 
 INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
 	VALUES (1, "user", "$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u", "", 0, "flag{this_is_a_flag}");
@@ -24,3 +21,6 @@ INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
 
 INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
 	VALUES (3, "mike", "$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u", "", 0, "flag{this_is_a_flag_mike}");
+
+INSERT OR IGNORE INTO courses (id, title, course_data)
+	VALUES (3, "Hacking 101", "Learn to become a master hacker");

@@ -61,6 +61,24 @@ function updateProfile($userId, $profileData)
     $stmt->execute($params);
 }
 
+function getAllCourses()
+{
+    $dbh = getDbConnection();
+    $stmt = $dbh->prepare("SELECT * FROM courses");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function addCourse($title, $description, $user_id)
+{
+    $dbh = getDbConnection();
+    $stmt = $dbh->prepare("INSERT INTO courses (title, description, user_id) VALUES (:title, :description, :user_id)");
+    $stmt->bindParam(':title', $title);
+    $stmt->bindParam(':description', $description);
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+}
+
 switch ($action) {
     case 'home':
         echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
@@ -176,34 +194,42 @@ switch ($action) {
         echo $twig->render('profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
         break;
 
-    // TODO: add courses table, update courses to use db
     case 'courses':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xml'])) {
-            $xmlFile = $_FILES['xml']['tmp_name'];
-            $xmlContent = file_get_contents($xmlFile);
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
+            $title = $_POST['title'];
+            $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
 
             $dom = new DOMDocument();
-            // TODO: make this less obvious
-            $dom->loadXML($xmlContent, LIBXML_NOENT | LIBXML_DTDLOAD);
+            $dom->loadXML($course_data, LIBXML_NOENT | LIBXML_DTDLOAD);
 
-            $title = $dom->getElementsByTagName('title')->item(0)->nodeValue;
-            $description = $dom->getElementsByTagName('description')->item(0)->nodeValue;
-
-            echo $twig->render('view_course.twig', [
-                'title' => $title,
-                'description' => $description,
-            ]);
-        } else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            echo $twig->render('create_course.twig');
-        } else {
-            echo $twig->render('forbidden.twig');
+            $dbh = getDbConnection();
+            $stmt = $dbh->prepare("INSERT INTO courses (title, course_data) VALUES (:title, :course_data)");
+            $stmt->bindParam(':title', $title);
+            $stmt->bindParam(':course_data', $course_data);
+            $stmt->execute();
         }
+
+        $dbh = getDbConnection();
+        $stmt = $dbh->prepare("SELECT * FROM courses");
+        $stmt->execute();
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($courses as &$course) {
+            $dom = new DOMDocument();
+            $dom->loadXML($course['course_data'], LIBXML_NOENT | LIBXML_DTDLOAD);
+            $course_data_element = $dom->getElementsByTagName('data')->item(0);
+            $course['course_data'] = $dom->saveXML($course_data_element);
+        }
+
+        echo $twig->render('courses.twig', ['courses' => $courses, 'user' => $_SESSION['user']]);
         break;
+
+
 
     default:
         echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);

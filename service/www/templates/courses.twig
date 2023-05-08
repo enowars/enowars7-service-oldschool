@@ -1,0 +1,30 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+	<h1>Courses</h1>
+
+	{% if user %}
+		<h2>Add Course</h2>
+		<form method="post" action="index.php?action=courses" enctype="multipart/form-data">
+			<label for="title">Course Title:</label>
+			<input type="text" name="title" id="title" required>
+			<br>
+			<label for="course_data">Course Data:</label>
+			<input type="file" name="course_data" id="course_data" accept=".xml" required>
+			<br>
+			<button type="submit">Add Course</button>
+		</form>
+	{% endif %}
+
+	<h2>Existing Courses</h2>
+	<ul>
+		{% for course in courses %}
+			<li>
+				{{ course.title }}
+				<div class="course-data">
+					{{ course.course_data|raw }}
+				</div>
+			</li>
+		{% endfor %}
+	</ul>
+{% endblock %}
