@@ -6,8 +6,8 @@
     <p>Name: {{ user.name }}</p>
     <p>Flag: {{ user.flag }}</p>
     <p>Is Admin: {{ user.is_admin ? 'Yes' : 'No' }}</p>
-        <p>User.id: {{user.id}}</p>
-        <p>logged_in_user.id: {{logged_in_user.id}}</p>
+    <p>User.id: {{user.id}}</p>
+    <p>logged_in_user.id: {{logged_in_user.id}}</p>
 
     {% if user.is_admin %}
     <a href="index.php?action=all_users">All Users</a>
@@ -24,7 +24,7 @@
             <input type="text" name="name" id="name" value="{{ user.name }}" required>
             <br>
             <label for="password">Password:</label>
-            <input type="password" name="password" id="password" value="{{ user.password }}" required>
+            <input type="password" name="password" id="password" required>
             <br>
             <label for="flag">Flag:</label>
             <input type="text" name="flag" id="flag" value="{{ user.flag }}" required>

@@ -44,6 +44,24 @@ if (!isset($_SESSION['courses'])) {
 
 $courses = $_SESSION['courses'];
 
+function getDbConnection()
+{
+    static $dbh = null;
+    if ($dbh === null) {
+        try {
+            $dbh = new PDO('sqlite:/service/db.sqlite');
+            $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Debugging
+            error_log("Database connection established.");
+        } catch (PDOException $e) {
+            error_log("Error connecting to the database: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    return $dbh;
+}
+
 function updateProfile($user_index, $new_data)
 {
     global $users;
@@ -57,29 +75,61 @@ switch ($action) {
         break;
 
     case 'login':
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $username = $_POST['username'];
             $password = $_POST['password'];
 
-            foreach ($users as $user) {
-                if ($user['username'] === $username && $user['password'] === $password) {
-                    $_SESSION['user'] = $user;
-                    header('Location: index.php?action=profile&id=' . $user['id']);
-                    exit;
-                }
+            $dbh = getDbConnection();
+            $stmt = $dbh->prepare('SELECT * FROM users WHERE username = :username');
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+                $_SESSION['user'] = $user;
+                header('Location: index.php');
+                exit;
+            } else {
+                $message = 'Invalid username or password.';
             }
         }
 
-        echo $twig->render('login.twig', ['user' => $_SESSION['user'] ?? null]);
+        echo $twig->render('login.twig', ['message' => $message ?? null]);
         break;
 
     case 'register':
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // TODO add registration logic
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php');
+            exit;
         }
 
-        echo $twig->render('register.twig', ['user' => $_SESSION['user'] ?? null]);
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $username = $_POST['username'];
+            $password = $_POST['password'];
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            $dbh = getDbConnection();
+            try {
+                $stmt = $dbh->prepare('INSERT INTO users (username, password, is_admin, flag) VALUES (:username, :password, 0, "flag{user_flag}")');
+                $stmt->bindParam(':username', $username);
+                $stmt->bindParam(':password', $hashedPassword);
+                $stmt->execute();
+
+                header('Location: index.php?action=login');
+                exit;
+            } catch (PDOException $e) {
+                $message = "Error: " . $e->getMessage();
+            }
+        }
+
+        echo $twig->render('register.twig', ['message' => $message ?? null]);
         break;
+
 
     case 'all_users':
         if (!isset($_SESSION['user']) || !$_SESSION['user']['is_admin']) {
