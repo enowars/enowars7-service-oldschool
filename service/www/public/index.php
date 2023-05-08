@@ -10,32 +10,6 @@ error_reporting(E_ALL);
 
 session_start();
 
-// TODO use actual database
-$users = [
-    [
-        'id' => 1,
-        'username' => 'admin',
-        'password' => 'admin',
-        'is_admin' => true,
-        'flag' => 'flag{admin_flag}'
-    ],
-    [
-        'id' => 2,
-        'username' => 'user',
-        'password' => 'user',
-        'is_admin' => false,
-        'flag' => 'flag{user_flag}'
-    ]
-];
-
-if (!isset($_SESSION['users'])) {
-    $_SESSION['users'] = $users;
-} else {
-    $users = $_SESSION['users'];
-}
-
-$users = $_SESSION['users'];
-
 $action = $_GET['action'] ?? 'home';
 
 if (!isset($_SESSION['courses'])) {
@@ -88,7 +62,6 @@ function updateProfile($userId, $profileData)
 }
 
 switch ($action) {
-    // TODO: update home to use db
     case 'home':
         echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
         break;
@@ -121,6 +94,13 @@ switch ($action) {
         echo $twig->render('login.twig', ['message' => $message ?? null]);
         break;
 
+    case 'logout':
+        if (isset($_SESSION['user'])) {
+            unset($_SESSION['user']);
+        }
+        header('Location: index.php?action=login');
+        exit;
+
     case 'register':
         if (isset($_SESSION['user'])) {
             header('Location: index.php');
@@ -149,14 +129,18 @@ switch ($action) {
         echo $twig->render('register.twig', ['message' => $message ?? null]);
         break;
 
-    // TODO: update all_users to use db
     case 'all_users':
         if (!isset($_SESSION['user']) || !$_SESSION['user']['is_admin']) {
             header('Location: index.php?action=login');
             exit;
         }
 
-        echo $twig->render('all_users.twig', ['users' => $users]);
+        $dbh = getDbConnection();
+        $stmt = $dbh->prepare("SELECT * FROM users");
+        $stmt->execute();
+        $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo $twig->render('all_users.twig', ['users' => $all_users]);
         break;
 
     case 'profile':

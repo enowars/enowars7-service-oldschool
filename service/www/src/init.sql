@@ -20,4 +20,7 @@ INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
 	VALUES (1, "user", "$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u", "", 0, "flag{this_is_a_flag}");
 -- TODO: remove admin user!
 INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
-	VALUES (1, "admin", "$2y$10$b9wVsbbrhmodmnonbRMSkOClFqL1an0iXjc5RgGUhmSStO3RNxKj.", "", 1, "flag{this_is_a_flag_admin}");
+	VALUES (2, "admin", "$2y$10$b9wVsbbrhmodmnonbRMSkOClFqL1an0iXjc5RgGUhmSStO3RNxKj.", "", 1, "flag{this_is_a_flag_admin}");
+
+INSERT OR IGNORE INTO users (id, username, password, name, is_admin, flag)
+	VALUES (3, "mike", "$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u", "", 0, "flag{this_is_a_flag_mike}");
