@@ -12,11 +12,11 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
-if (!isset($_SESSION['courses'])) {
-    $_SESSION['courses'] = [];
-}
+// if (!isset($_SESSION['courses'])) {
+//     $_SESSION['courses'] = [];
+// }
 
-$courses = $_SESSION['courses'];
+// $courses = $_SESSION['courses'];
 
 function getDbConnection()
 {
