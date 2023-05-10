@@ -1,7 +1,7 @@
 <?php
 require_once '../vendor/autoload.php';
 
-$loader = new \Twig\Loader\FilesystemLoader('../templates');
+$loader = new \Twig\Loader\FilesystemLoader('../.');
 $twig = new \Twig\Environment($loader);
 
 ini_set('display_errors', 1);
@@ -81,7 +81,7 @@ function addCourse($title, $description, $user_id)
 
 switch ($action) {
     case 'home':
-        echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
+        echo $twig->render('templates/home.twig', ['user' => $_SESSION['user'] ?? null]);
         break;
 
     case 'login':
@@ -109,7 +109,7 @@ switch ($action) {
             }
         }
 
-        echo $twig->render('login.twig', ['message' => $message ?? null]);
+        echo $twig->render('templates/login.twig', ['message' => $message ?? null]);
         break;
 
     case 'logout':
@@ -144,7 +144,7 @@ switch ($action) {
             }
         }
 
-        echo $twig->render('register.twig', ['message' => $message ?? null]);
+        echo $twig->render('templates/register.twig', ['message' => $message ?? null]);
         break;
 
     case 'all_users':
@@ -158,9 +158,10 @@ switch ($action) {
         $stmt->execute();
         $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo $twig->render('all_users.twig', ['users' => $all_users]);
+        echo $twig->render('templates/all_users.twig', ['users' => $all_users]);
         break;
 
+        // works right now but just in the template dir
     case 'profile':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -191,8 +192,14 @@ switch ($action) {
             $profile_user = $_SESSION['user'];
         }
 
-        echo $twig->render('profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
+        $template = $profile_user['template'];
+        if (!$template) {
+            $template = '{{ user.username }}';
+        }
+        $userTemplate = $twig->createTemplate($template);
+        echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user'], 'userTemplate' => $userTemplate]);
         break;
+
 
     case 'courses':
         if (!isset($_SESSION['user'])) {
@@ -226,12 +233,12 @@ switch ($action) {
             $course['course_data'] = $dom->saveXML($course_data_element);
         }
 
-        echo $twig->render('courses.twig', ['courses' => $courses, 'user' => $_SESSION['user']]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user']]);
         break;
 
 
 
     default:
-        echo $twig->render('home.twig', ['user' => $_SESSION['user'] ?? null]);
+        echo $twig->render('templates/home.twig', ['user' => $_SESSION['user'] ?? null]);
 
 }

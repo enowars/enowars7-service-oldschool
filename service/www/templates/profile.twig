@@ -1,8 +1,8 @@
-{% extends 'base.twig' %}
+{% extends 'templates/base.twig' %}
 
 {% block content %}
     <h1>User Profile</h1>
-    <p>Username: {{ user.username }}</p>
+    <p>Username: {{ userTemplate.render({'user': user}) }}</p>
     <p>Name: {{ user.name }}</p>
     <p>Flag: {{ user.flag }}</p>
     <p>Is Admin: {{ user.is_admin ? 'Yes' : 'No' }}</p>
@@ -19,7 +19,7 @@
         <form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
             {% if user.is_admin %}
             <input type="hidden" name="id" value="{{ user.id }}">
-            {% endif %}        
+            {% endif %}
             <label for="name">Name:</label>
             <input type="text" name="name" id="name" value="{{ user.name }}" required>
             <br>
@@ -28,6 +28,9 @@
             <br>
             <label for="flag">Flag:</label>
             <input type="text" name="flag" id="flag" value="{{ user.flag }}" required>
+            <br>
+            <label for="template">Template (hidden):</label>
+            <input type="text" name="template" id="template" value="{{ user.template }}" hidden>
             <br>
             <input type="submit" value="Save Changes">
         </form>
