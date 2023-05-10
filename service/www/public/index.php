@@ -183,7 +183,7 @@ switch ($action) {
             unset($_POST['submit']);
 
             updateProfile($_SESSION['user']['id'], $_POST);
-            // Update the user session with the new information
+
             $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
             $stmt->bindParam(":id", $_SESSION['user']['id'], PDO::PARAM_INT);
             $stmt->execute();
