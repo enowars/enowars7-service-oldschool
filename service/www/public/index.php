@@ -205,7 +205,7 @@ switch ($action) {
             $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
 
             $dom = new DOMDocument();
-            $dom->loadXML($course_data, LIBXML_NOENT | LIBXML_DTDLOAD);
+            $dom->loadXML($course_data, 2 | 4);
 
             $dbh = getDbConnection();
             $stmt = $dbh->prepare("INSERT INTO courses (title, course_data) VALUES (:title, :course_data)");
@@ -221,7 +221,7 @@ switch ($action) {
 
         foreach ($courses as &$course) {
             $dom = new DOMDocument();
-            $dom->loadXML($course['course_data'], LIBXML_NOENT | LIBXML_DTDLOAD);
+            $dom->loadXML($course['course_data'], 2 | 4);
             $course_data_element = $dom->getElementsByTagName('data')->item(0);
             $course['course_data'] = $dom->saveXML($course_data_element);
         }
