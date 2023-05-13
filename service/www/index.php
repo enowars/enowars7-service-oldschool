@@ -49,7 +49,9 @@ function updateProfile($userId, $profileData)
 
     $sql .= ' WHERE id = :userId';
     $params[':userId'] = $userId;
-    $params[':password'] = password_hash($params[':password'], PASSWORD_DEFAULT);
+    if (isset($params[':password']) && $params[':password'] != '') {
+        $params[':password'] = password_hash($params[':password'], PASSWORD_DEFAULT);
+    }
 
     $stmt = $dbh->prepare($sql);
     $stmt->execute($params);
@@ -154,7 +156,7 @@ switch ($action) {
 
         echo $twig->render('templates/all_users.twig', ['users' => $all_users]);
         break;
-        
+
     case 'profile':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');

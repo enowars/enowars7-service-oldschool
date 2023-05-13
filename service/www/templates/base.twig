@@ -8,8 +8,10 @@
 		<header>
 			<nav>
 				<a href="index.php?action=home">Home</a>
+				{% if not user %}
 				<a href="index.php?action=login">Login</a>
 				<a href="index.php?action=register">Register</a>
+				{% endif %}
 				{% if user %}
 					<a class="nav-link" href="index.php?action=profile&id={{ user.id }}">My Profile</a>
 					<a class="nav-link" href="index.php?action=courses">Courses</a>

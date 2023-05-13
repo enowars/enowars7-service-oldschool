@@ -1,38 +1,63 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-    <h1>User Profile</h1>
-    <p>Username: {{ userTemplate.render({'user': user}) }}</p>
-    <p>Name: {{ user.name }}</p>
-    <p>Flag: {{ user.flag }}</p>
-    <p>Is Admin: {{ user.is_admin ? 'Yes' : 'No' }}</p>
-    <p>User.id: {{user.id}}</p>
-    <p>logged_in_user.id: {{logged_in_user.id}}</p>
+	<h1>User Profile</h1>
+	<p>Username:
+		{{ userTemplate.render({'user': user}) }}</p>
+	<p>Name:
+		{{ user.name }}</p>
+	<p>Flag:
+		{{ user.flag }}</p>
+	<p>Is Admin:
+		{{ user.is_admin ? 'Yes' : 'No' }}</p>
+	<p>User.id:
+		{{user.id}}</p>
+	<p>logged_in_user.id:
+		{{logged_in_user.id}}</p>
 
-    {% if user.is_admin %}
-    <a href="index.php?action=all_users">All Users</a>
-    <br>
-    {% endif %}
+	{% if user.is_admin %}
+		<a href="index.php?action=all_users">All Users</a>
+		<br>
+	{% endif %}
 
-    {% if user.id == logged_in_user.id %}
-        <h2>Edit Profile</h2>
-        <form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
-            {% if user.is_admin %}
-            <input type="hidden" name="id" value="{{ user.id }}">
-            {% endif %}
-            <label for="name">Name:</label>
-            <input type="text" name="name" id="name" value="{{ user.name }}" required>
-            <br>
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" required>
-            <br>
-            <label for="flag">Flag:</label>
-            <input type="text" name="flag" id="flag" value="{{ user.flag }}" required>
-            <br>
-            <label for="template">Template (hidden):</label>
-            <input type="text" name="template" id="template" value="{{ user.template }}" hidden>
-            <br>
-            <input type="submit" value="Save Changes">
-        </form>
-    {% endif %}
+	{% if user.id == logged_in_user.id %}
+		<h2>Edit Profile</h2>
+		<form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
+			{% if user.is_admin %}
+				<input type="hidden" name="id" value="{{ user.id }}">
+			{% endif %}
+			<label for="name">Username:</label>
+			<input type="text" name="username" id="username" value="{{ user.username }}" required>
+			<br>
+			<label for="name">Name:</label>
+			<input type="text" name="name" id="name" value="{{ user.name }}" required>
+			<br>
+			<label for="flag">Flag:</label>
+			<input type="text" name="flag" id="flag" value="{{ user.flag }}" required>
+			<br>
+			<input type="submit" value="Save Changes">
+		</form>
+
+		<h2>Change Password</h2>
+		<form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
+			{% if user.is_admin %}
+				<input type="hidden" name="id" value="{{ user.id }}">
+			{% endif %}
+			<label for="password">New Password:</label>
+			<input type="password" name="password" id="password">
+			<br>
+			<input type="submit" value="Change Password">
+		</form>
+
+		<h2>Edit Template</h2>
+		<form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
+			{% if user.is_admin %}
+				<input type="hidden" name="id" value="{{ user.id }}">
+			{% endif %}
+			<label for="template">Template:</label>
+			<input type="text" name="template" id="template" value="{{ user.template }}">
+			<br>
+			<input type="submit" value="Update Template">
+		</form>
+	{% endif %}
 {% endblock %}
