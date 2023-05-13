@@ -1,7 +1,7 @@
 <?php
-require_once '../vendor/autoload.php';
+require_once 'vendor/autoload.php';
 
-$loader = new \Twig\Loader\FilesystemLoader('../.');
+$loader = new \Twig\Loader\FilesystemLoader('.');
 $twig = new \Twig\Environment($loader);
 
 ini_set('display_errors', 1);
@@ -11,12 +11,6 @@ error_reporting(E_ALL);
 session_start();
 
 $action = $_GET['action'] ?? 'home';
-
-// if (!isset($_SESSION['courses'])) {
-//     $_SESSION['courses'] = [];
-// }
-
-// $courses = $_SESSION['courses'];
 
 function getDbConnection()
 {
@@ -160,8 +154,7 @@ switch ($action) {
 
         echo $twig->render('templates/all_users.twig', ['users' => $all_users]);
         break;
-
-        // works right now but just in the template dir
+        
     case 'profile':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
