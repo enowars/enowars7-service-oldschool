@@ -12,6 +12,14 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
+function loadConfig($filePath) {
+    $config = parse_ini_file($filePath, true);
+    if (!$config) {
+        throw new Exception("Failed to load configuration.");
+    }
+    return $config;
+}
+
 function getDbConnection()
 {
     static $dbh = null;
@@ -74,6 +82,9 @@ function addCourse($title, $description, $user_id)
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
 }
+
+$config = loadConfig('config/config.ini');
+$xmlMode = $config['xml']['MODE'];
 
 switch ($action) {
     case 'home':
@@ -207,7 +218,7 @@ switch ($action) {
             $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
 
             $dom = new DOMDocument();
-            $dom->loadXML($course_data, 2 | 4);
+            $dom->loadXML($course_data, $xmlMode);
 
             $dbh = getDbConnection();
             $stmt = $dbh->prepare("INSERT INTO courses (title, course_data) VALUES (:title, :course_data)");
@@ -223,7 +234,7 @@ switch ($action) {
 
         foreach ($courses as &$course) {
             $dom = new DOMDocument();
-            $dom->loadXML($course['course_data'], 2 | 4);
+            $dom->loadXML($course['course_data'], $xmlMode);
             $course_data_element = $dom->getElementsByTagName('data')->item(0);
             $course['course_data'] = $dom->saveXML($course_data_element);
         }
