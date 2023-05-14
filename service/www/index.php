@@ -200,7 +200,7 @@ switch ($action) {
 
         $template = $profile_user['template'];
         if (!$template) {
-            $template = '{{ user.username }}';
+            $template = 'User Profile';
         }
         $userTemplate = $twig->createTemplate($template);
         echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user'], 'userTemplate' => $userTemplate]);

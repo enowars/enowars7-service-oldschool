@@ -1,9 +1,9 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-	<h1>User Profile</h1>
+	<h1>{{ userTemplate.render() }}</h1>
 	<p>Username:
-		{{ userTemplate.render({'user': user}) }}</p>
+		{{ user.username }}</p>
 	<p>Name:
 		{{ user.name }}</p>
 	<p>Flag:
