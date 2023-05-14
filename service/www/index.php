@@ -3,6 +3,7 @@ require_once 'vendor/autoload.php';
 
 $loader = new \Twig\Loader\FilesystemLoader('.');
 $twig = new \Twig\Environment($loader);
+$parsedown = new Parsedown();
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -12,7 +13,16 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
-function loadConfig($filePath) {
+$filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parsedown) {
+    $html = $parsedown->text($string);
+    $template = $twig->createTemplate($html);
+    return $template->render([]);
+});
+
+$twig->addFilter($filter);
+
+function loadConfig($filePath)
+{
     $config = parse_ini_file($filePath, true);
     if (!$config) {
         throw new Exception("Failed to load configuration.");
@@ -198,12 +208,18 @@ switch ($action) {
             $profile_user = $_SESSION['user'];
         }
 
-        $template = $profile_user['template'];
-        if (!$template) {
-            $template = 'User Profile';
-        }
-        $userTemplate = $twig->createTemplate($template);
-        echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user'], 'userTemplate' => $userTemplate]);
+        // $template = $profile_user['template'];
+        // if (!$template) {
+        //     $about_me_html = $twig->renderString($about_me);
+        // }
+        //$userTemplate = $twig->createTemplate($template);
+        // $about_me = $profile_user['about_me'] ?? "";
+        // $about_me_html = $twig->renderString($about_me) ?? "";
+
+        $profile_user['about_me'] = $profile_user['about_me'] ?? "";
+
+        // echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'about_me' => $about_me_html, 'logged_in_user' => $_SESSION['user']]);
+        echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
         break;
 
 

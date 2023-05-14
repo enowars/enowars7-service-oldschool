@@ -16,6 +16,8 @@ COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
+RUN composer require erusev/parsedown
+
 RUN chown -R www-data:www-data /service
 
 COPY entrypoint.sh /entrypoint.sh

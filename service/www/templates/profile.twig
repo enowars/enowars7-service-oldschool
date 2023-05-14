@@ -1,7 +1,11 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-	<h1>{{ userTemplate.render() }}</h1>
+	{% if user.is_admin %}
+		<h1>Admin Profile</h1>
+	{% else %}
+		<h1>User Profile</h1>
+	{% endif %}
 	<p>Username:
 		{{ user.username }}</p>
 	<p>Name:
@@ -14,6 +18,11 @@
 		{{user.id}}</p>
 	<p>logged_in_user.id:
 		{{logged_in_user.id}}</p>
+
+	{# <h2>About Me</h2>
+		{{ about_me|raw }} #}
+	<h2>About Me</h2>
+	{{ user.about_me|markdown|raw }}
 
 	{% if user.is_admin %}
 		<a href="index.php?action=all_users">All Users</a>
@@ -49,15 +58,15 @@
 			<input type="submit" value="Change Password">
 		</form>
 
-		<h2>Edit Template</h2>
+		<h2>Edit About Me</h2>
 		<form method="POST" action="index.php?action=profile{% if user.is_admin and app.request.query.get('id') %}&id={{ app.request.query.get('id') }}{% endif %}">
 			{% if user.is_admin %}
 				<input type="hidden" name="id" value="{{ user.id }}">
 			{% endif %}
-			<label for="template">Template:</label>
-			<input type="text" name="template" id="template" value="{{ user.template }}">
+			<label for="template">About Me:</label>
+			<textarea name="about_me" id="about_me" rows="4" cols="50">{{ user.about_me }}</textarea>
 			<br>
-			<input type="submit" value="Update Template">
+			<input type="submit" value="Update About Me">
 		</form>
 	{% endif %}
 {% endblock %}
