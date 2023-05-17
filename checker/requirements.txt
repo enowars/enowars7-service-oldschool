@@ -1,0 +1,8 @@
+enochecker3==0.8.1
+httpx
+requests
+python_dateutil
+beautifulsoup4
+uvicorn
+gunicorn
+faker
