@@ -34,9 +34,16 @@ $twig->addExtension($sandbox); // Enable sandbox mode
 $twig->getExtension(SandboxExtension::class)->enableSandbox(); // Enable sandbox mode
 
 $filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parsedown) {
-    $html = $parsedown->text($string);
-    $template = $twig->createTemplate($html);
-    return $template->render([]);
+    try {
+        $html = $parsedown->text($string);
+        $template = $twig->createTemplate($html);
+        return $template->render([]);
+    } catch (\Exception $e) {
+        // Log error message
+        error_log('Error rendering markdown: ' . $e->getMessage());
+        // Return a user-friendly error message or just an empty string
+        return 'Error rendering markdown. Please check your input.';
+    }
 });
 
 $twig->addFilter($filter);
