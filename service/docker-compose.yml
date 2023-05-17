@@ -6,3 +6,7 @@ services:
     container_name: oldschool-service
     ports:
       - '9080:80'
+    volumes:
+      - oldschool-db:/service/db
+volumes:
+  oldschool-db:

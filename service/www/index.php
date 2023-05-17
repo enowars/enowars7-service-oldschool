@@ -62,7 +62,7 @@ function getDbConnection()
     static $dbh = null;
     if ($dbh === null) {
         try {
-            $dbh = new PDO('sqlite:/service/db.sqlite');
+            $dbh = new PDO('sqlite:/service/db/db.sqlite');
             $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Debugging
