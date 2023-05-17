@@ -1,0 +1,40 @@
+version: '2.1'
+services:
+  oldschool-checker:
+    build: .
+    ports:
+      - 9082:9082
+    environment:
+      - MONGO_ENABLED=1
+      - MONGO_HOST=oldschool-mongo
+      - MONGO_PORT=9083
+      - MONGO_USER=oldschool
+      - MONGO_PASSWORD=oldschool
+    mem_limit: 1G
+    memswap_limit: 2G
+    ulimits:
+      core:
+        soft: 0
+        hard: 0
+      nproc:
+        soft: 4000
+        hard: 4000
+  # The python checkerlib requires a mongo db!
+  oldschool-mongo:
+    image: mongo
+    ports:
+     - 9083:9083
+    volumes:
+      - ./data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: oldschool
+      MONGO_INITDB_ROOT_PASSWORD: oldschool
+    mem_limit: 1G
+    memswap_limit: 2G
+    ulimits:
+      core:
+        soft: 0
+        hard: 0
+      nproc:
+        soft: 4000
+        hard: 4000

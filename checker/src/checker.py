@@ -48,7 +48,7 @@ Utility functions
 # TODO: add utility functions here
 
 """
-CHECKER FUNCTIONS
+Checker functions
 """
 
 # TODO: putflag, getflag, putnoise, getnoise, exploit
