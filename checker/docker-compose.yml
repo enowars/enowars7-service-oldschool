@@ -10,8 +10,6 @@ services:
       - MONGO_PORT=9083
       - MONGO_USER=oldschool
       - MONGO_PASSWORD=oldschool
-    mem_limit: 1G
-    memswap_limit: 2G
     ulimits:
       core:
         soft: 0
@@ -22,6 +20,7 @@ services:
   # The python checkerlib requires a mongo db!
   oldschool-mongo:
     image: mongo
+    command: mongod --port 9083
     ports:
      - 9083:9083
     volumes:
@@ -29,8 +28,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: oldschool
       MONGO_INITDB_ROOT_PASSWORD: oldschool
-    mem_limit: 1G
-    memswap_limit: 2G
     ulimits:
       core:
         soft: 0
