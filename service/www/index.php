@@ -1,25 +1,59 @@
 <?php
 require_once 'vendor/autoload.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+use Twig\Extension\SandboxExtension; // Enable sandbox mode
+use Twig\Sandbox\SecurityPolicy; // Enable sandbox mode
 
 $loader = new \Twig\Loader\FilesystemLoader('.');
 $twig = new \Twig\Environment($loader);
 $parsedown = new Parsedown();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+$config = loadConfig('config/config.ini');
+
+$xmlMode = $config['xml']['mode'];
+$allowedTags = explode(',', $config['sandbox']['allowed_tags']); // Enable sandbox mode
+$allowedFilters = explode(',', $config['sandbox']['allowed_filters']); // Enable sandbox mode
+$allowedMethods = explode(',', $config['sandbox']['allowed_methods']); // Enable sandbox mode
+$allowedProperties = explode(',', $config['sandbox']['allowed_properties']); // Enable sandbox mode
+$allowedFunctions = explode(',', $config['sandbox']['allowed_functions']); // Enable sandbox mode
+
+$sandbox = new SandboxExtension(
+        // Enable sandbox mode
+    new SecurityPolicy(
+        $allowedTags,
+        $allowedFilters,
+        $allowedMethods,
+        $allowedProperties,
+        $allowedFunctions
+    )
+);
+$twig->addExtension($sandbox); // Enable sandbox mode
+$twig->getExtension(SandboxExtension::class)->enableSandbox(); // Enable sandbox mode
+
+$filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parsedown) {
+    try {
+        $html = $parsedown->text($string);
+        $template = $twig->createTemplate($html);
+        return $template->render([]);
+    } catch (\Exception $e) {
+        // Log error message
+        error_log('Error rendering markdown: ' . $e->getMessage());
+        // Return a user-friendly error message or just an empty string
+        return 'Error rendering markdown. Please check your input.';
+    }
+});
+
+$twig->addFilter($filter);
+
 
 session_start();
 
 $action = $_GET['action'] ?? 'home';
 
-$filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parsedown) {
-    $html = $parsedown->text($string);
-    $template = $twig->createTemplate($html);
-    return $template->render([]);
-});
 
-$twig->addFilter($filter);
 
 function loadConfig($filePath)
 {
@@ -35,7 +69,7 @@ function getDbConnection()
     static $dbh = null;
     if ($dbh === null) {
         try {
-            $dbh = new PDO('sqlite:/service/db.sqlite');
+            $dbh = new PDO('sqlite:/service/db/db.sqlite');
             $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Debugging
@@ -93,8 +127,7 @@ function addCourse($title, $description, $user_id)
     $stmt->execute();
 }
 
-$config = loadConfig('config/config.ini');
-$xmlMode = $config['xml']['MODE'];
+
 
 switch ($action) {
     case 'home':
