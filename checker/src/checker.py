@@ -72,13 +72,13 @@ def assert_status_code(
     r: Response,
     code: int,
     errmsg: Optional[str],
-    extra: Any = "",
+    info: Any = "",
 ) -> None:
     if r.status_code != code:
         logger.error(
-            f"Bad service response for "
+            f"Bad http status code for "
             + f"{r.request.method} {r.request.url.path}:\n"
-            + f"Extra info: {str(extra)}\n{r.text}"
+            + f"Info: {str(info)}\n{r.text}"
         )
         if errmsg is None:
             errmsg = f"{r.request.method} {r.request.url.path} failed"
@@ -103,7 +103,7 @@ async def putflag_db(
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
-    assert_status_code(logger, r, 302, "Register failed", extra=data)
+    assert_status_code(logger, r, 302, "Register failed", info=data)
 
     # parse user id
     r = await client.get("/index.php?action=home")
@@ -115,7 +115,7 @@ async def putflag_db(
     name, flag = noise(5, 16), task.flag
     data = {"username": username, "name": name, "flag": flag}
     r = await client.post("/index.php?action=profile", data=data)
-    assert_status_code(logger, r, 200, "Update Profile failed", extra=data)
+    assert_status_code(logger, r, 200, "Update Profile failed", info=data)
 
     await db.set("info", (username, password, user_id))
 
@@ -136,13 +136,14 @@ async def getflag_db(
 
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=login", data=data)
-    assert_status_code(logger, r, 302, "Login failed", extra=data)
+    assert_status_code(logger, r, 302, "Login failed", info=data)
 
     r = await client.get(f"/index.php?action=profile&id={user_id}")
-    assert_status_code(logger, r, 200, "Access profile failed", extra=user_id)
+    assert_status_code(logger, r, 200, "Access profile failed", info=user_id)
     flag = parse_flag(r.text)
 
     assert_in(task.flag, flag, "Flag missing")
+
 
 # TODO: fix the flagRegex problem
 # @checker.exploit(0)
@@ -162,18 +163,18 @@ async def getflag_db(
 #     username, password = noise(10, 15), noise(16, 20)
 #     data = {"username": username, "password": password}
 #     r = await client.post("/index.php?action=register", data=data)
-#     assert_status_code(logger, r, 302, "Register failed", extra=data)
+#     assert_status_code(logger, r, 302, "Register failed", info=data)
 
 #     # exploit mass assignment in update profile
 #     data = {"username": username, "is_admin": 1}
 #     r = await client.post("/index.php?action=profile", data=data)
 #     assert_status_code(
-#         logger, r, 200, "Mass assignment vuln in update Profile failed", extra=data
+#         logger, r, 200, "Mass assignment vuln in update Profile failed", info=data
 #     )
 
 #     # get flag
 #     r = await client.get(f"/index.php?action=profile&id={flaguser_id}")
-#     assert_status_code(logger, r, 200, "Flaguser profile missing", extra=data)
+#     assert_status_code(logger, r, 200, "Flaguser profile missing", info=data)
 #     flag = searcher.search_flag(r.text)
 #     if flag is not None:
 #         return flag
