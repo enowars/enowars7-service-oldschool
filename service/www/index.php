@@ -182,13 +182,22 @@ switch ($action) {
 
             $dbh = getDbConnection();
             try {
-                $stmt = $dbh->prepare('INSERT INTO users (username, password, is_admin, flag) VALUES (:username, :password, 0, "flag{user_flag}")');
+                // Insert user
+                $stmt = $dbh->prepare('INSERT INTO users (username, password, is_admin, flag) VALUES (:username, :password, 0, "")');
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':password', $hashedPassword);
                 $stmt->execute();
 
-                header('Location: index.php?action=login');
+                // Fetch user
+                $stmt = $dbh->prepare('SELECT * FROM users WHERE username = :username');
+                $stmt->bindParam(':username', $username);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                $_SESSION['user'] = $user;
+                header('Location: index.php');
                 exit;
+
             } catch (PDOException $e) {
                 $message = "Error: " . $e->getMessage();
             }

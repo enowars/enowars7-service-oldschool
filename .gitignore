@@ -1,2 +1,6 @@
 .dccache
 checker/data
+checker/test.sh
+.gitignore
+checker/local.sh
+checker/src/__pycache__
