@@ -6,6 +6,9 @@
 	{% else %}
 		<h1>User Profile</h1>
 	{% endif %}
+	{% if message %}
+		<p>{{ message }}</p>
+	{% endif %}
 	<p>Username:
 		{{ user.username }}</p>
 	<p>Name:

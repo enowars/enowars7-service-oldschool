@@ -199,7 +199,7 @@ switch ($action) {
                 exit;
 
             } catch (PDOException $e) {
-                $message = "Error: " . $e->getMessage();
+                $message = "Username already exists.";
             }
         }
 
@@ -241,27 +241,22 @@ switch ($action) {
             unset($_POST['id']);
             unset($_POST['submit']);
 
-            updateProfile($_SESSION['user']['id'], $_POST);
+            try {
+                updateProfile($_SESSION['user']['id'], $_POST);
+                $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
+                $stmt->bindParam(":id", $_SESSION['user']['id'], PDO::PARAM_INT);
+                $stmt->execute();
+                $_SESSION['user'] = $stmt->fetch(PDO::FETCH_ASSOC);
+                $profile_user = $_SESSION['user'];
+            } catch (PDOException $e) {
+                $message = "Error updating profile..";
+            }
 
-            $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
-            $stmt->bindParam(":id", $_SESSION['user']['id'], PDO::PARAM_INT);
-            $stmt->execute();
-            $_SESSION['user'] = $stmt->fetch(PDO::FETCH_ASSOC);
-            $profile_user = $_SESSION['user'];
         }
-
-        // $template = $profile_user['template'];
-        // if (!$template) {
-        //     $about_me_html = $twig->renderString($about_me);
-        // }
-        //$userTemplate = $twig->createTemplate($template);
-        // $about_me = $profile_user['about_me'] ?? "";
-        // $about_me_html = $twig->renderString($about_me) ?? "";
 
         $profile_user['about_me'] = $profile_user['about_me'] ?? "";
 
-        // echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'about_me' => $about_me_html, 'logged_in_user' => $_SESSION['user']]);
-        echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user']]);
+        echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user'], 'message' => $message ?? null]);
         break;
 
 
