@@ -4,3 +4,4 @@ checker/test.sh
 .gitignore
 checker/local.sh
 checker/src/__pycache__
+.vscode/
