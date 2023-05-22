@@ -259,7 +259,6 @@ switch ($action) {
         echo $twig->render('templates/profile.twig', ['user' => $profile_user, 'logged_in_user' => $_SESSION['user'], 'message' => $message ?? null]);
         break;
 
-
     case 'courses':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -269,21 +268,36 @@ switch ($action) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
             $title = $_POST['title'];
             $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
+            $is_private = isset($_POST['is_private']) ? 1 : 0;
 
             $dom = new DOMDocument();
-            $dom->loadXML($course_data, $xmlMode);
+            libxml_use_internal_errors(true);
 
-            $dbh = getDbConnection();
-            $stmt = $dbh->prepare("INSERT INTO courses (title, course_data) VALUES (:title, :course_data)");
-            $stmt->bindParam(':title', $title);
-            $stmt->bindParam(':course_data', $course_data);
-            $stmt->execute();
+            if ($dom->loadXML($course_data, $xmlMode)) {
+                try {
+                    $dbh = getDbConnection();
+                    $stmt = $dbh->prepare("INSERT INTO courses (title, course_data, created_by, is_private) VALUES (:title, :course_data, :created_by, :is_private)");
+                    $stmt->bindParam(':title', $title);
+                    $stmt->bindParam(':course_data', $course_data);
+                    $stmt->bindParam(':created_by', $_SESSION['user']['id']);
+                    $stmt->bindParam(':is_private', $is_private);
+                    $stmt->execute();
+                } catch (PDOException $e) {
+                    $message = "Error adding course.";
+                }
+            } else {
+                $message = "Invalid XML. Please make sure your XML is valid.";
+                $errors = libxml_get_errors();
+                libxml_clear_errors();
+            }
         }
 
         $dbh = getDbConnection();
-        $stmt = $dbh->prepare("SELECT * FROM courses");
+        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
+        $stmt->bindParam(':user_id', $_SESSION['user']['id']);
         $stmt->execute();
         $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 
         foreach ($courses as &$course) {
             $dom = new DOMDocument();
@@ -292,7 +306,7 @@ switch ($action) {
             $course['course_data'] = $dom->saveXML($course_data_element);
         }
 
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user']]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message ?? null]);
         break;
 
 

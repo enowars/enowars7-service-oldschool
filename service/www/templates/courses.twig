@@ -1,8 +1,10 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
+	{% if message %}
+		<p>{{ message }}</p>
+	{% endif %}
 	<h1>Courses</h1>
-
 	{% if user %}
 		<h2>Add Course</h2>
 		<form method="post" action="index.php?action=courses" enctype="multipart/form-data">
@@ -11,6 +13,9 @@
 			<br>
 			<label for="course_data">Course Data:</label>
 			<input type="file" name="course_data" id="course_data" accept=".xml" required>
+			<br>
+			<label for="is_private">Private:</label>
+			<input type="checkbox" name="is_private" id="is_private">
 			<br>
 			<button type="submit">Add Course</button>
 		</form>

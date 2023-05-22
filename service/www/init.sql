@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS courses (
 	id INTEGER PRIMARY KEY,
 	title STRING NOT NULL,
-	course_data TEXT NOT NULL
+	course_data STRING NOT NULL,
+	created_by INTEGER NOT NULL,
+	is_private INTEGER NOT NULL DEFAULT 0
 );
 
 INSERT
@@ -52,16 +54,12 @@ VALUES
 	);
 
 INSERT
-	OR IGNORE INTO courses (id, title, course_data)
+	OR IGNORE INTO courses (id, title, course_data, created_by, is_private)
 VALUES
 	(
-		3,
+		1,
 		"Introduction to Web Security",
-		"<?xml version='1.0' encoding='UTF-8'?>
-<data>
-    <course>
-        <name>WEB 101</name>
-        <description>Learn the basics of web security and common vulnerabilities, including XSS, CSRF, and SQL injection.</description>
-    </course>
-</data>"
+		"<?xml version='1.0' encoding='UTF-8'?><data><course><name>WEB 101</name><description>Learn the basics of web security and common vulnerabilities, including XSS, CSRF, and SQL injection.</description></course></data>",
+		1,
+		0
 	);
