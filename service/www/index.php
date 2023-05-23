@@ -317,15 +317,19 @@ switch ($action) {
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
             if (isset($_FILES['grades']) && $_FILES['grades']['error'] == 0) {
-                $filename = $_SESSION['user']['id'] . "_" . md5($_FILES['grades']['name'] . uniqid() . mt_rand());
-                $destination = "grades/" . $filename;
-                move_uploaded_file($_FILES['grades']['tmp_name'], $destination);
+                try {
+                    $filename = $_SESSION['user']['id'] . "_" . md5($_FILES['grades']['name'] . uniqid() . mt_rand());
+                    $destination = "grades/" . $filename;
+                    move_uploaded_file($_FILES['grades']['tmp_name'], $destination);
 
-                $dbh = getDbConnection();
-                $stmt = $dbh->prepare("INSERT INTO grades (user_id, filename) VALUES (:user_id, :filename)");
-                $stmt->bindParam(':user_id', $_SESSION['user']['id']);
-                $stmt->bindParam(':filename', $filename);
-                $stmt->execute();
+                    $dbh = getDbConnection();
+                    $stmt = $dbh->prepare("INSERT INTO grades (user_id, filename) VALUES (:user_id, :filename)");
+                    $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                    $stmt->bindParam(':filename', $filename);
+                    $stmt->execute();
+                } catch (PDOException $e) {
+                    $message = "Error adding grades.";
+                }
             }
         }
 
