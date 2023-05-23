@@ -1,0 +1,25 @@
+{% extends 'templates/base.twig' %}
+
+{% block content %}
+	<h1>Your Grades</h1>
+
+	<h2>Upload Grades</h2>
+	<form method="post" action="index.php?action=grades" enctype="multipart/form-data">
+		<label for="grades">Grades:</label>
+		<input type="file" name="grades" id="grades" required>
+		<button type="submit">Upload</button>
+	</form>
+
+	<h2>Your Uploaded Grades</h2>
+	<ul>
+		{% for grade in grades %}
+			<li>
+				{{ grade.filename }}
+				<div class="grade-data">
+					{{ grade.content }}
+				</div>
+
+			</li>
+		{% endfor %}
+	</ul>
+{% endblock %}

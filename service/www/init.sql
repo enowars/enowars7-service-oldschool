@@ -16,6 +16,12 @@ CREATE TABLE IF NOT EXISTS courses (
 	is_private INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS grades (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    filename STRING NOT NULL
+);
+
 INSERT
 	OR IGNORE INTO users (id, username, password, name, is_admin, flag)
 VALUES

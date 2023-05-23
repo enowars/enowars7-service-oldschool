@@ -309,6 +309,39 @@ switch ($action) {
         echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message ?? null]);
         break;
 
+    case 'grades':
+        if (!isset($_SESSION['user'])) {
+            header('Location: index.php?action=login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
+            if (isset($_FILES['grades']) && $_FILES['grades']['error'] == 0) {
+                $filename = $_SESSION['user']['id'] . "_" . md5($_FILES['grades']['name'] . uniqid() . mt_rand());
+                $destination = "grades/" . $filename;
+                move_uploaded_file($_FILES['grades']['tmp_name'], $destination);
+
+                $dbh = getDbConnection();
+                $stmt = $dbh->prepare("INSERT INTO grades (user_id, filename) VALUES (:user_id, :filename)");
+                $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                $stmt->bindParam(':filename', $filename);
+                $stmt->execute();
+            }
+        }
+
+        $dbh = getDbConnection();
+        $stmt = $dbh->prepare("SELECT * FROM grades WHERE user_id = :user_id");
+        $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+        $stmt->execute();
+        $grades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($grades as &$grade) {
+            $filename = "grades/" . $grade['filename'];
+            $grade['content'] = file_exists($filename) ? file_get_contents($filename) : 'File not found';
+        }
+
+        echo $twig->render('templates/grades.twig', ['grades' => $grades, 'user' => $_SESSION['user']]);
+        break;
 
 
     default:
