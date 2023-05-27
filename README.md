@@ -1,4 +1,4 @@
-# Old School Service
+# Oldschool
 
 This service is an online learning platform where users can register, login, create a profile, upload courses, and upload grades.
 
