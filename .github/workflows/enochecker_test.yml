@@ -60,4 +60,4 @@ jobs:
         run: |
           (cd service && docker-compose kill)
           (cd checker && docker-compose kill)
-          (docker volume rm oldschool_service_oldschool-db)
+          (cd service && docker-compose down; docker volume rm oldschool_service_oldschool-db)
