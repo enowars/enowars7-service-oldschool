@@ -314,7 +314,7 @@ async def exploit_ssti(
 
     assert_equals(len(task.attack_info.split()), 5)
 
-    # Attack info is in the form of "User {username} Uploaded Grade {filename}"
+    # Attack info: "User {username} Uploaded Grade {filename}"
     _, _, _, _, filename = task.attack_info.split()
 
     # register user and login
