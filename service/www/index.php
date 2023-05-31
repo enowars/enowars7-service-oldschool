@@ -69,10 +69,9 @@ function getDbConnection()
     static $dbh = null;
     if ($dbh === null) {
         try {
-            $dbh = new PDO('sqlite:/service/db/db.sqlite');
+            $dbh = new PDO('mysql:host=db;dbname=oldschool', 'oldschool', 'oldschoolpassword');
             $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            // Debugging
             error_log("Database connection established.");
         } catch (PDOException $e) {
             error_log("Error connecting to the database: " . $e->getMessage());

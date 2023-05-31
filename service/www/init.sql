@@ -1,29 +1,29 @@
 CREATE TABLE IF NOT EXISTS users (
-	id INTEGER PRIMARY KEY,
-	username STRING NOT NULL UNIQUE,
-	password STRING NOT NULL,
-	name STRING NOT NULL DEFAULT "",
-	about_me STRING,
+	id INTEGER AUTO_INCREMENT PRIMARY KEY,
+	username VARCHAR(255) NOT NULL UNIQUE,
+	password VARCHAR(255) NOT NULL,
+	name VARCHAR(255) NOT NULL DEFAULT "",
+	about_me TEXT,
 	is_admin INTEGER NOT NULL DEFAULT 0,
-	flag INTEGER DEFAULT NULL
+	flag VARCHAR(255) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS courses (
-	id INTEGER PRIMARY KEY,
-	title STRING NOT NULL,
-	course_data STRING NOT NULL,
+	id INTEGER AUTO_INCREMENT PRIMARY KEY,
+	title VARCHAR(255) NOT NULL,
+	course_data TEXT NOT NULL,
 	created_by INTEGER NOT NULL,
 	is_private INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS grades (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    filename STRING NOT NULL
+	id INTEGER AUTO_INCREMENT PRIMARY KEY,
+	user_id INTEGER NOT NULL,
+	filename TEXT NOT NULL
 );
 
-INSERT
-	OR IGNORE INTO users (id, username, password, name, is_admin, flag)
+INSERT INTO
+	users (id, username, password, name, is_admin, flag)
 VALUES
 	(
 		1,
@@ -35,8 +35,8 @@ VALUES
 	);
 
 -- TODO: remove admin user!
-INSERT
-	OR IGNORE INTO users (id, username, password, name, is_admin, flag)
+INSERT INTO
+	users (id, username, password, name, is_admin, flag)
 VALUES
 	(
 		2,
@@ -47,8 +47,8 @@ VALUES
 		"flag{this_is_a_flag_admin}"
 	);
 
-INSERT
-	OR IGNORE INTO users (id, username, password, name, is_admin, flag)
+INSERT INTO
+	users (id, username, password, name, is_admin, flag)
 VALUES
 	(
 		3,
@@ -59,8 +59,8 @@ VALUES
 		"flag{this_is_a_flag_mike}"
 	);
 
-INSERT
-	OR IGNORE INTO courses (id, title, course_data, created_by, is_private)
+INSERT INTO
+	courses (id, title, course_data, created_by, is_private)
 VALUES
 	(
 		1,

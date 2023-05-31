@@ -1,7 +1,7 @@
 FROM php:7.4-apache
 
 RUN apt-get update && \
-    apt-get install -y zlib1g-dev libzip-dev sqlite3 && \
+    apt-get install -y zlib1g-dev libzip-dev sqlite3 default-mysql-client && \
     docker-php-ext-install zip pdo_mysql && \
     a2enmod rewrite && \
     ln -sfT /dev/stdout /var/log/apache2/access.log
