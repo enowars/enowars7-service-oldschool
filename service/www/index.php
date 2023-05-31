@@ -281,6 +281,7 @@ switch ($action) {
                     $stmt->bindParam(':created_by', $_SESSION['user']['id']);
                     $stmt->bindParam(':is_private', $is_private);
                     $stmt->execute();
+                    http_response_code(201);
                 } catch (PDOException $e) {
                     $message = "Error adding course.";
                 }
@@ -326,6 +327,7 @@ switch ($action) {
                     $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                     $stmt->bindParam(':filename', $filename);
                     $stmt->execute();
+                    http_response_code(201);
                 } catch (PDOException $e) {
                     $message = "Error adding grades.";
                 }

