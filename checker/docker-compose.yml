@@ -21,8 +21,8 @@ services:
   oldschool-mongo:
     image: mongo
     command: mongod --port 9083
-    ports:
-     - 9083:9083
+    # ports:
+    #  - 9083:9083
     volumes:
       - ./data:/data/db
     environment:
