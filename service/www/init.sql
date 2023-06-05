@@ -31,32 +31,7 @@ VALUES
 		"$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u",
 		"",
 		0,
-		"flag{this_is_a_flag}"
-	);
-
--- TODO: remove admin user!
-INSERT INTO
-	users (id, username, password, name, is_admin, flag)
-VALUES
-	(
-		2,
-		"admin",
-		"$2y$10$b9wVsbbrhmodmnonbRMSkOClFqL1an0iXjc5RgGUhmSStO3RNxKj.",
-		"",
-		1,
-		"flag{this_is_a_flag_admin}"
-	);
-
-INSERT INTO
-	users (id, username, password, name, is_admin, flag)
-VALUES
-	(
-		3,
-		"mike",
-		"$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u",
-		"",
-		0,
-		"flag{this_is_a_flag_mike}"
+		"FLAG{this_is_also_just_test_flag!}"
 	);
 
 INSERT INTO

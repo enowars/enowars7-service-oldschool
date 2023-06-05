@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<data>
-    <course>
-        <name>Introduction to Web Security</name>
-        <description>Learn the basics of web security and common vulnerabilities, including XSS, CSRF, and SQL injection.</description>
-    </course>
-</data>

