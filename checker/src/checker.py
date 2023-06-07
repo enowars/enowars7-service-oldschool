@@ -138,11 +138,11 @@ async def putflag_db(
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
-    assert_status_code(logger, r, 302, "Register failed", info=data)
+    assert_status_code(logger, r, 302, "Register failed")
 
     # parse user id
     r = await client.get("/index.php?action=home")
-    assert_status_code(logger, r, 200, "Get home failed")
+    assert_status_code(logger, r, 200, "Get home page failed")
     id_match = re.search(r'href="index\.php\?action=profile&id=(\d+)"', r.text)
     user_id = id_match.group(1)
 
@@ -150,7 +150,7 @@ async def putflag_db(
     name, flag = noise(5, 16), task.flag
     data = {"username": username, "name": name, "flag": flag}
     r = await client.post("/index.php?action=profile", data=data)
-    assert_status_code(logger, r, 200, "Update Profile failed", info=data)
+    assert_status_code(logger, r, 200, "Update Profile failed")
 
     await db.set("info", (username, password, user_id))
 
@@ -171,10 +171,10 @@ async def getflag_db(
 
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=login", data=data)
-    assert_status_code(logger, r, 302, "Login failed", info=data)
+    assert_status_code(logger, r, 302, "Login failed")
 
     r = await client.get(f"/index.php?action=profile&id={user_id}")
-    assert_status_code(logger, r, 200, "Access profile failed", info=user_id)
+    assert_status_code(logger, r, 200, "Access profile failed")
     flag = parse_flag(r.text)
 
     assert_in(task.flag, flag, "Flag missing")
@@ -191,14 +191,14 @@ async def putflag_db(
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
-    assert_status_code(logger, r, 302, "Register failed", info=data)
+    assert_status_code(logger, r, 302, "Register failed")
 
     # create the grade file
     file_obj = io.BytesIO(task.flag.encode())
 
     # post grade
     r = await client.post("/index.php?action=grades", files={"grades": file_obj})
-    assert_status_code(logger, r, 201, "Post Grade Grade failed", info=data)
+    assert_status_code(logger, r, 201, "Upload Grade failed")
     filename = parse_filename(r.text)
     if not filename:
         raise MumbleException("Filename missing")
@@ -222,7 +222,7 @@ async def getflag_db(
 
     data = {"username": username, "password": password}
     r = await client.post("/index.php?action=login", data=data)
-    assert_status_code(logger, r, 302, "Login failed", info=data)
+    assert_status_code(logger, r, 302, "Login failed")
 
     r = await client.get(f"/index.php?action=grades")
     assert_status_code(logger, r, 200, "Access grades failed")
@@ -249,7 +249,7 @@ async def exploit_mass_assign(
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": "exploiter0_" + username, "password": password}
     r = await client.post("/index.php?action=register", data=data)
-    assert_status_code(logger, r, 302, "Register failed", info=data)
+    assert_status_code(logger, r, 302, "Register failed")
 
     # exploit mass assignment in update profile
     data = {"username": "exploiter_" + username, "is_admin": 1}
