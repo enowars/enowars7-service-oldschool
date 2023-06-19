@@ -4,19 +4,21 @@
 	{% if message %}
 		<p>{{ message }}</p>
 	{% endif %}
+
 	<h1>Courses</h1>
+
 	{% if user %}
 		<h2>Add Course</h2>
 		<form method="post" action="index.php?action=courses" enctype="multipart/form-data">
 			<label for="title">Course Title:</label>
 			<input type="text" name="title" id="title" required>
-			<br>
+
 			<label for="course_data">Course Data:</label>
 			<input type="file" name="course_data" id="course_data" accept=".xml" required>
-			<br>
+
 			<label for="is_private">Private:</label>
 			<input type="checkbox" name="is_private" id="is_private">
-			<br>
+
 			<button type="submit">Add Course</button>
 		</form>
 	{% endif %}
@@ -25,26 +27,31 @@
 	<ul>
 		{% for course in courses %}
 			<li>
-				{{ course.title }}
-				<div class="course-data">
-					{{ course.course_data|raw }}
-				</div>
+				<h3>{{ course.title }}
+					(ID:
+					{{ course.id }})</h3>
+
+				<div class="course-data">{{ course.course_data|raw }}</div>
+
 				{% if user.admin_of == course.id %}
-					<span>Admin</span>
+					<span class="label label-admin">Admin</span>
 				{% elseif course.user_enrolled %}
-					<span>Joined</span>
+					<span class="label label-joined">Joined</span>
 				{% else %}
 					<form method="post" action="index.php?action=join_course">
 						<input type="hidden" name="course_id" value="{{ course.id }}">
 						<button type="submit">Join Course</button>
 					</form>
 				{% endif %}
+
 				{% if course.enrolled_users %}
-					<h3>Enrolled Users:</h3>
+					<h4>Enrolled Users:</h4>
 					<ul>
 						{% for enrolled_user in course.enrolled_users %}
 							<li>
-								<a href="index.php?action=profile&id={{ enrolled_user.id }}">{{ enrolled_user.username }}</a>
+								<a href="index.php?action=profile&id={{ enrolled_user.id }}">
+									{{ enrolled_user.username }}
+								</a>
 							</li>
 						{% endfor %}
 					</ul>

