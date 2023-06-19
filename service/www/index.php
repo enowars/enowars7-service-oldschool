@@ -205,20 +205,6 @@ switch ($action) {
         echo $twig->render('templates/register.twig', ['message' => $message ?? null]);
         break;
 
-    case 'all_users':
-        if (!isset($_SESSION['user']) || !$_SESSION['user']['is_admin']) {
-            header('Location: index.php?action=login');
-            exit;
-        }
-
-        $dbh = getDbConnection();
-        $stmt = $dbh->prepare("SELECT * FROM users");
-        $stmt->execute();
-        $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo $twig->render('templates/all_users.twig', ['users' => $all_users]);
-        break;
-
     case 'profile':
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');

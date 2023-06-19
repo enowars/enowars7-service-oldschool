@@ -1,11 +1,7 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-	{% if user.is_admin %}
-		<h1>Admin Profile</h1>
-	{% else %}
-		<h1>User Profile</h1>
-	{% endif %}
+	<h1>User Profile</h1>
 	{% if message %}
 		<p>{{ message }}</p>
 	{% endif %}
@@ -15,8 +11,6 @@
 		{{ user.name }}</p>
 	<p>Flag:
 		{{ user.flag }}</p>
-	<p>Is Admin:
-		{{ user.is_admin ? 'Yes' : 'No' }}</p>
 	<p>User.id:
 		{{user.id}}</p>
 	<p>logged_in_user.id:
@@ -24,11 +18,6 @@
 
 	<h2>About Me</h2>
 	{{ user.about_me|markdown|raw }}
-
-	{% if user.is_admin %}
-		<a href="index.php?action=all_users">All Users</a>
-		<br>
-	{% endif %}
 
 	{% if user.id == logged_in_user.id %}
 		<h2>Edit Profile</h2>
