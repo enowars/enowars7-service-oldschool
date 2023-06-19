@@ -289,6 +289,12 @@ switch ($action) {
                         $stmt->execute();
                         $course_id = $dbh->lastInsertId();
 
+                        $stmt = $dbh->prepare("UPDATE users SET admin_of = :course_id WHERE id = :user_id");
+                        $stmt->bindParam(':course_id', $course_id);
+                        $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                        $stmt->execute();
+                        $_SESSION['user']['admin_of'] = $course_id;
+
                         $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
                         $stmt->bindParam(':course_id', $course_id);
                         $stmt->bindParam(':user_id', $_SESSION['user']['id']);

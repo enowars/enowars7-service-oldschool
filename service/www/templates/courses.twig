@@ -29,7 +29,7 @@
 				<div class="course-data">
 					{{ course.course_data|raw }}
 				</div>
-				{% if course.id == user.admin_of %}
+				{% if user.admin_of == course.id %}
 					<span>Admin</span>
 				{% elseif course.user_enrolled %}
 					<span>Joined</span>
