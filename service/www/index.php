@@ -355,12 +355,23 @@ switch ($action) {
             $course_id = $_POST['course_id'];
             $dbh = getDbConnection();
 
+            $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id");
+            $stmt->bindParam(':course_id', $course_id);
+            $stmt->execute();
+            $course = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($course['is_private'] == 1 && $_SESSION['user']['id'] != $course['created_by']) {
+                header('Location: index.php?action=courses&message=You+cannot+join+a+private+course.');
+                exit;
+            }
+
             try {
                 $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
                 $stmt->bindParam(':course_id', $course_id);
                 $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                 $stmt->execute();
                 header('Location: index.php?action=courses');
+                exit;
             } catch (PDOException $e) {
                 $message = "Error joining course.";
             }
