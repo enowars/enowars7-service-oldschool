@@ -34,8 +34,8 @@
 				{% elseif course.user_enrolled %}
 					<span>Joined</span>
 				{% else %}
-					<form method="post" action="index.php?action=courses">
-						<input type="hidden" name="join_course" value="{{ course.id }}">
+					<form method="post" action="index.php?action=join_course">
+						<input type="hidden" name="course_id" value="{{ course.id }}">
 						<button type="submit">Join Course</button>
 					</form>
 				{% endif %}

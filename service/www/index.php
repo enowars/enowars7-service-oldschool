@@ -345,17 +345,19 @@ switch ($action) {
             exit;
         }
 
-        $course_id = $_POST['course_id'];
-        $dbh = getDbConnection();
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $course_id = $_POST['course_id'];
+            $dbh = getDbConnection();
 
-        try {
-            $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
-            $stmt->bindParam(':course_id', $course_id);
-            $stmt->bindParam(':user_id', $_SESSION['user']['id']);
-            $stmt->execute();
-            http_response_code(201);
-        } catch (PDOException $e) {
-            $message = "Error joining course.";
+            try {
+                $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+                $stmt->bindParam(':course_id', $course_id);
+                $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                $stmt->execute();
+                header('Location: index.php?action=courses');
+            } catch (PDOException $e) {
+                $message = "Error joining course.";
+            }
         }
 
         header('Location: index.php?action=courses');
