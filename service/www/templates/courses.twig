@@ -29,6 +29,20 @@
 				<div class="course-data">
 					{{ course.course_data|raw }}
 				</div>
+				{% if course.enrolled_users %}
+					<h3>Enrolled Users:</h3>
+					<ul>
+						{% for user in course.enrolled_users %}
+							<li>{{ user.username }}</li>
+						{% endfor %}
+					</ul>
+				{% endif %}
+				{% if user %}
+					<form method="post" action="index.php?action=join_course">
+						<input type="hidden" name="course_id" value="{{ course.id }}">
+						<button type="submit">Join Course</button>
+					</form>
+				{% endif %}
 			</li>
 		{% endfor %}
 	</ul>

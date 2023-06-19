@@ -182,7 +182,7 @@ switch ($action) {
             $dbh = getDbConnection();
             try {
                 // Insert user
-                $stmt = $dbh->prepare('INSERT INTO users (username, password, is_admin, flag) VALUES (:username, :password, 0, "")');
+                $stmt = $dbh->prepare('INSERT INTO users (username, password, flag) VALUES (:username, :password, "")');
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':password', $hashedPassword);
                 $stmt->execute();
@@ -229,14 +229,26 @@ switch ($action) {
         $profile_user_id = $_GET['id'] ?? null;
         $dbh = getDbConnection();
 
-        if (isset($profile_user_id) && $profile_user['is_admin']) {
+        if (isset($profile_user_id)) {
+            // Fetch the requested profile user
             $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
             $stmt->bindParam(":id", $profile_user_id, PDO::PARAM_INT);
             $stmt->execute();
             $profile_user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Check if the logged in user is an admin of the course the profile user is in
+            $stmt = $dbh->prepare("SELECT * FROM course_enrollments WHERE course_id IN (SELECT admin_of FROM users WHERE id = :admin_id) AND user_id = :user_id");
+            $stmt->bindParam(':admin_id', $_SESSION['user']['id']);
+            $stmt->bindParam(':user_id', $profile_user['id']);
+            $stmt->execute();
+
+            if ($stmt->rowCount() == 0 && $_SESSION['user']['id'] != $profile_user['id']) {
+                header('Location: index.php?action=profile');
+                exit;
+            }
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && (!isset($profile_user_id) || !$profile_user['is_admin'])) {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']['id'] == $profile_user['id']) {
             unset($_POST['id']);
             unset($_POST['submit']);
 
@@ -250,7 +262,6 @@ switch ($action) {
             } catch (PDOException $e) {
                 $message = "Error updating profile..";
             }
-
         }
 
         $profile_user['about_me'] = $profile_user['about_me'] ?? "";
@@ -281,19 +292,24 @@ switch ($action) {
                     $stmt->bindParam(':created_by', $_SESSION['user']['id']);
                     $stmt->bindParam(':is_private', $is_private);
                     $stmt->execute();
+                    $lastInsertId = $dbh->lastInsertId();
+                    $stmt = $dbh->prepare("UPDATE users SET admin_of = :lastInsertId WHERE id = :user_id");
+                    $stmt->bindParam(':lastInsertId', $lastInsertId);
+                    $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                    $stmt->execute();
                     http_response_code(201);
                 } catch (PDOException $e) {
                     $message = "Error adding course.";
                 }
             } else {
-                $message = "Invalid XML. Please make sure your XML is valid.";
+                $message = "Invalid XML. Please make sure your XML is valid";
                 $errors = libxml_get_errors();
                 libxml_clear_errors();
             }
         }
 
         $dbh = getDbConnection();
-        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
+        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id OR id IN (SELECT admin_of FROM users WHERE id = :user_id)");
         $stmt->bindParam(':user_id', $_SESSION['user']['id']);
         $stmt->execute();
         $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -306,7 +322,38 @@ switch ($action) {
             $course['course_data'] = $dom->saveXML($course_data_element);
         }
 
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message ?? null]);
+        foreach ($courses as &$course) {
+            if ($_SESSION['user']['admin_of'] == $course['id']) {
+                $stmt = $dbh->prepare("SELECT users.* FROM users JOIN course_enrollments ON users.id = course_enrollments.user_id WHERE course_enrollments.course_id = :course_id");
+                $stmt->bindParam(':course_id', $course['id']);
+                $stmt->execute();
+                $course['enrolled_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        }
+
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message ?? null, 'enrolled_users' => $course['enrolled_users'] ?? []]);
+        break;
+
+    case 'join_course':
+        if (!isset($_SESSION['user'])) {
+            header('Location: index.php?action=login');
+            exit;
+        }
+
+        $course_id = $_POST['course_id'];
+        $dbh = getDbConnection();
+
+        try {
+            $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+            $stmt->bindParam(':course_id', $course_id);
+            $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+            $stmt->execute();
+            http_response_code(201);
+        } catch (PDOException $e) {
+            $message = "Error joining course.";
+        }
+
+        header('Location: index.php?action=courses');
         break;
 
     case 'grades':
