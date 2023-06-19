@@ -275,54 +275,73 @@ switch ($action) {
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
-            $title = $_POST['title'];
-            $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
-            $is_private = isset($_POST['is_private']) ? 1 : 0;
+        $dbh = getDbConnection();
+        $message = null;
 
-            $dom = new DOMDocument();
-            libxml_use_internal_errors(true);
-
-            if ($dom->loadXML($course_data, $xmlMode)) {
-                try {
-                    $dbh = getDbConnection();
-                    $stmt = $dbh->prepare("INSERT INTO courses (title, course_data, created_by, is_private) VALUES (:title, :course_data, :created_by, :is_private)");
-                    $stmt->bindParam(':title', $title);
-                    $stmt->bindParam(':course_data', $course_data);
-                    $stmt->bindParam(':created_by', $_SESSION['user']['id']);
-                    $stmt->bindParam(':is_private', $is_private);
-                    $stmt->execute();
-                    $lastInsertId = $dbh->lastInsertId();
-                    $stmt = $dbh->prepare("UPDATE users SET admin_of = :lastInsertId WHERE id = :user_id");
-                    $stmt->bindParam(':lastInsertId', $lastInsertId);
-                    $stmt->bindParam(':user_id', $_SESSION['user']['id']);
-                    $stmt->execute();
-                    http_response_code(201);
-                } catch (PDOException $e) {
-                    $message = "Error adding course.";
-                }
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if (isset($_POST['course_id'])) {
+                $course_id = $_POST['course_id'];
+                $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+                $stmt->bindParam(':course_id', $course_id);
+                $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                $stmt->execute();
             } else {
-                $message = "Invalid XML. Please make sure your XML is valid";
-                $errors = libxml_get_errors();
-                libxml_clear_errors();
+                $title = $_POST['title'];
+                $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
+                $is_private = isset($_POST['is_private']) ? 1 : 0;
+
+                $dom = new DOMDocument();
+                libxml_use_internal_errors(true);
+
+                if ($dom->loadXML($course_data, $xmlMode)) {
+                    try {
+                        $stmt = $dbh->prepare("INSERT INTO courses (title, course_data, created_by, is_private) VALUES (:title, :course_data, :created_by, :is_private)");
+                        $stmt->bindParam(':title', $title);
+                        $stmt->bindParam(':course_data', $course_data);
+                        $stmt->bindParam(':created_by', $_SESSION['user']['id']);
+                        $stmt->bindParam(':is_private', $is_private);
+                        $stmt->execute();
+                        $course_id = $dbh->lastInsertId();
+
+                        $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+                        $stmt->bindParam(':course_id', $course_id);
+                        $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                        $stmt->execute();
+
+                        http_response_code(201);
+                    } catch (PDOException $e) {
+                        $message = "Error adding course.";
+                    }
+                } else {
+                    $message = "Invalid XML. Please make sure your XML is valid";
+                    $errors = libxml_get_errors();
+                    libxml_clear_errors();
+                }
             }
         }
 
-        $dbh = getDbConnection();
-        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id OR id IN (SELECT admin_of FROM users WHERE id = :user_id)");
+        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
         $stmt->bindParam(':user_id', $_SESSION['user']['id']);
         $stmt->execute();
         $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
         foreach ($courses as &$course) {
             $dom = new DOMDocument();
             $dom->loadXML($course['course_data'], $xmlMode);
             $course_data_element = $dom->getElementsByTagName('data')->item(0);
             $course['course_data'] = $dom->saveXML($course_data_element);
-        }
 
-        foreach ($courses as &$course) {
+            $stmt = $dbh->prepare("SELECT user_id FROM course_enrollments WHERE course_id = :course_id");
+            $stmt->bindParam(':course_id', $course['id']);
+            $stmt->execute();
+            $course['users'] = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+
+            if (in_array($_SESSION['user']['id'], $course['users'])) {
+                $course['user_enrolled'] = true;
+            } else {
+                $course['user_enrolled'] = false;
+            }
+
             if ($_SESSION['user']['admin_of'] == $course['id']) {
                 $stmt = $dbh->prepare("SELECT users.* FROM users JOIN course_enrollments ON users.id = course_enrollments.user_id WHERE course_enrollments.course_id = :course_id");
                 $stmt->bindParam(':course_id', $course['id']);
@@ -331,7 +350,7 @@ switch ($action) {
             }
         }
 
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message ?? null, 'enrolled_users' => $course['enrolled_users'] ?? []]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'enrolled_users' => $enrolled_users]);
         break;
 
     case 'join_course':
