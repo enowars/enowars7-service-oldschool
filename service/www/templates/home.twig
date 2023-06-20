@@ -1,43 +1,22 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-    <h2>
-        Welcome to the Online Learning Platform
-            
-    </h2>
-
-    {% if user %}
-        <p>
-            Hello, 
-                        
-            {{ user.username }}
-            !
-                    
-        </p>
-        <p>
-            <a href="index.php?action=profile&id={{ user.id }}">
-                My Profile
-                            
-            </a>
-        </p>
-        <p>
-            <a href="index.php?action=logout">
-                Logout
-                            
-            </a>
-        </p>
-    {% else %}
-        <p>
-            <a href="index.php?action=login">
-                Login
-                            
-            </a>
-        </p>
-        <p>
-            <a href="index.php?action=register">
-                Register
-                            
-            </a>
-        </p>
-    {% endif %}
+	<h2>Welcome to the Online Learning Platform</h2>
+	{% if user %}
+		<p>Hello,
+			{{ user.username }}!</p>
+		<p>
+			<a href="index.php?action=profile&id={{ user.id }}">My Profile</a>
+		</p>
+		<p>
+			<a href="index.php?action=logout">Logout</a>
+		</p>
+	{% else %}
+		<p>
+			<a href="index.php?action=login">Login</a>
+		</p>
+		<p>
+			<a href="index.php?action=register">Register</a>
+		</p>
+	{% endif %}
 {% endblock %}

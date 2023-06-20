@@ -58,5 +58,6 @@ jobs:
       - name: Kill docker containers
         if: failure() || success()
         run: |
+          (cd checker && docker volume rm oldschool_service_oldschool-db)
           (cd service && docker-compose kill)
           (cd checker && docker-compose kill)
