@@ -60,4 +60,5 @@ jobs:
         run: |
           (cd service && docker-compose kill)
           (cd checker && docker-compose kill)
-          
+          (cd service && docker-compose down)
+          (cd checker && docker-compose down; docker volume rm $(docker volume ls -q))
