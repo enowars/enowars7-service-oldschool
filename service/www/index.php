@@ -419,6 +419,9 @@ switch ($action) {
         echo $twig->render('templates/grades.twig', ['grades' => $grades, 'user' => $_SESSION['user']]);
         break;
 
+    case 'about':
+        echo $twig->render('templates/about.twig', ['user' => $_SESSION['user']]);
+        break;
 
     default:
         echo $twig->render('templates/home.twig', ['user' => $_SESSION['user'] ?? null]);
