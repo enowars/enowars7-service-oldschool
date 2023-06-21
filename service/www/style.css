@@ -1,0 +1,120 @@
+body {
+  font-family: "Courier New", monospace;
+  background-color: #d3d3d3;
+  background-image: url("https://www.transparenttextures.com/patterns/graphy.png");
+  background-repeat: repeat;
+  color: #000080;
+}
+
+.header {
+  background-color: #008080;
+  color: #ffd700;
+  padding: 15px;
+  border-bottom: 3px double #000000;
+}
+
+.nav-link {
+  color: #ff4500;
+  margin-right: 15px;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.main {
+  margin: 20px;
+  background-color: #f5f5dc;
+  padding: 20px;
+  border: 2px groove #000000;
+}
+
+.btn {
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #45a049;
+}
+
+.profile-heading {
+  font-size: 2em;
+  color: #000080;
+  margin-bottom: 20px;
+}
+
+.message {
+  color: #ff0000;
+  font-size: 1.2em;
+}
+
+.field-label {
+  font-weight: bold;
+  color: #000080;
+}
+
+.input-field {
+  margin-bottom: 15px;
+}
+
+.input-field input[type="text"],
+.input-field input[type="password"],
+.input-field textarea {
+  width: 200px;
+  padding: 5px;
+  border: 2px solid #000080;
+}
+
+.submit-button {
+  background-color: #008080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  padding: 5px 10px;
+  text-decoration: none;
+  font-family: "Courier New", Courier, monospace;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.submit-button:hover {
+  background-color: #000080;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+.message-error {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+.label-admin {
+  color: #ffffff;
+  background-color: #ff0000;
+  padding: 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+.label-joined {
+  color: #ffffff;
+  background-color: #008000;
+  padding: 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-top: 10px;
+  display: inline-block;
+}

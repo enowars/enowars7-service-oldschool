@@ -3,50 +3,15 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>Oldschool</title>
-		<style>
-			body {
-				font-family: 'Times New Roman', serif;
-				background-color: #008080;
-				color: #000000;
-				background-image: url('../images/os_tile5.png');
-				background-repeat: repeat;
-			}
-			header {
-				background-color: #000080;
-				color: #FFFFFF;
-				padding: 10px;
-			}
-			nav a {
-				color: #00FF00;
-				margin-right: 10px;
-				text-decoration: underline;
-			}
-			main {
-				margin: 20px;
-				background-color: #FFFFFF;
-				padding: 20px;
-			}
-			input[type=submit] {
-				background-color: #4CAF50;
-				border: none;
-				color: white;
-				padding: 15px 32px;
-				text-align: center;
-				text-decoration: none;
-				display: inline-block;
-				font-size: 16px;
-				margin: 4px 2px;
-				cursor: pointer;
-			}
-		</style>
+		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
-		<header>
+		<header class="header">
 			<nav>
-				<a href="index.php?action=home">Home</a>
+				<a class="nav-link" href="index.php?action=home">Home</a>
 				{% if not user %}
-					<a href="index.php?action=login">Login</a>
-					<a href="index.php?action=register">Register</a>
+					<a class="nav-link" href="index.php?action=login">Login</a>
+					<a class="nav-link" href="index.php?action=register">Register</a>
 				{% endif %}
 				{% if user %}
 					<a class="nav-link" href="index.php?action=profile&id={{ user.id }}">My Profile</a>
@@ -55,8 +20,7 @@
 				{% endif %}
 			</nav>
 		</header>
-		<main>
-			{% block content %}{% endblock %}
-		</main>
-	</body>
-</html>
+		<main class="main"> {% block content %}{% endblock %}
+			</main>
+		</body>
+	</html>

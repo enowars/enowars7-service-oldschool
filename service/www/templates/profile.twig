@@ -1,53 +1,76 @@
 {% extends 'templates/base.twig' %}
 
 {% block content %}
-	<h1>User Profile</h1>
+	<h1 class="profile-heading">User Profile</h1>
 	{% if message %}
-		<p>{{ message }}</p>
+		<p class="message">{{ message }}</p>
 	{% endif %}
-	<p>Username:
-		{{ user.username }}</p>
-	<p>Name:
-		{{ user.name }}</p>
-	<p>Flag:
-		{{ user.flag }}</p>
-	<p>User.id:
-		{{user.id}}</p>
-	<p>logged_in_user.id:
-		{{logged_in_user.id}}</p>
+	<div class="input-field">
+		<label for="username" class="field-label">Username:</label>
+		<span>{{ user.username }}</span>
+	</div>
+	<div class="input-field">
+		<label for="name" class="field-label">Name:</label>
+		<span>{{ user.name }}</span>
+	</div>
+	<div class="input-field">
+		<label for="flag" class="field-label">Flag:</label>
+		<span>{{ user.flag }}</span>
+	</div>
+	<div class="input-field">
+		<label for="user.id" class="field-label">User.id:</label>
+		<span>{{user.id}}</span>
+	</div>
+	<div class="input-field">
+		<label for="logged_in_user.id" class="field-label">Logged_in_user.id:</label>
+		<span>{{logged_in_user.id}}</span>
+	</div>
 
-	<h2>About Me</h2>
-	{{ user.about_me|markdown|raw }}
+	<h2 class="profile-heading">About Me</h2>
+	<div class="about-me">
+		{{ user.about_me|markdown|raw }}
+	</div>
 
 	{% if user.id == logged_in_user.id %}
-		<h2>Edit Profile</h2>
+		<h2 class="profile-heading">Edit Profile</h2>
 		<form method="POST" action="index.php?action=profile">
-			<label for="name">Username:</label>
-			<input type="text" name="username" id="username" value="{{ user.username }}" required>
-			<br>
-			<label for="name">Name:</label>
-			<input type="text" name="name" id="name" value="{{ user.name }}" required>
-			<br>
-			<label for="flag">Flag:</label>
-			<input type="text" name="flag" id="flag" value="{{ user.flag }}" required>
-			<br>
-			<input type="submit" value="Save Changes">
+			<div class="input-field">
+				<label for="username" class="field-label">Username:</label>
+				<input type="text" name="username" id="username" value="{{ user.username }}" required>
+			</div>
+			<div class="input-field">
+				<label for="name" class="field-label">Name:</label>
+				<input type="text" name="name" id="name" value="{{ user.name }}" required>
+			</div>
+			<div class="input-field">
+				<label for="flag" class="field-label">Flag:</label>
+				<input type="text" name="flag" id="flag" value="{{ user.flag }}" required>
+			</div>
+			<div class="input-field">
+				<input type="submit" class="submit-button" value="Save Changes">
+			</div>
 		</form>
 
-		<h2>Change Password</h2>
+		<h2 class="profile-heading">Change Password</h2>
 		<form method="POST" action="index.php?action=profile">
-			<label for="password">New Password:</label>
-			<input type="password" name="password" id="password">
-			<br>
-			<input type="submit" value="Change Password">
+			<div class="input-field">
+				<label for="password" class="field-label">New Password:</label>
+				<input type="password" name="password" id="password">
+			</div>
+			<div class="input-field">
+				<input type="submit" class="submit-button" value="Change Password">
+			</div>
 		</form>
 
-		<h2>Edit About Me</h2>
+		<h2 class="profile-heading">Edit About Me</h2>
 		<form method="POST" action="index.php?action=profile">
-			<label for="template">About Me:</label>
-			<textarea name="about_me" id="about_me" rows="4" cols="50">{{ user.about_me }}</textarea>
-			<br>
-			<input type="submit" value="Update About Me">
+			<div class="input-field">
+				<label for="about_me" class="field-label">About Me:</label>
+				<textarea name="about_me" id="about_me" rows="4" cols="50">{{ user.about_me }}</textarea>
+			</div>
+			<div class="input-field">
+				<input type="submit" class="submit-button" value="Update About Me">
+			</div>
 		</form>
 	{% endif %}
 {% endblock %}
