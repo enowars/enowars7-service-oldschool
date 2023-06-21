@@ -55,12 +55,8 @@ alphabet = string.ascii_letters + string.digits
 
 def parse_flag(text: str):
     soup = BeautifulSoup(text, "html.parser")
-    flag = (
-        soup.find("p", string=lambda text: text and text.startswith("Flag:"))
-        .get_text(strip=True)
-        .split(":", 1)[1]
-        .strip()
-    )
+    flag_label = soup.find("label", string="Flag:")
+    flag = flag_label.find_next_sibling().get_text(strip=True)
     return flag
 
 
