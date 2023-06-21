@@ -118,6 +118,23 @@ def parse_courseid(text: str, title: str):
     raise MumbleException("No Course Id found")
 
 
+def parse_is_admin(html_text: str, course_name: str, course_id: str):
+    soup = BeautifulSoup(html_text, "html.parser")
+
+    course_items = soup.find_all("div", class_="course-item")
+
+    for course_item in course_items:
+        course_title = " ".join(course_item.find("h3").text.split())
+        target_title = f"{course_name} (ID: {course_id})"
+
+        if course_title == target_title:
+            admin_label = course_item.find("span", class_="label-admin")
+            if admin_label:
+                return True
+
+    return False
+
+
 def generate_xxe_payload(filename: str):
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE data [
@@ -193,7 +210,7 @@ async def putflag_db(
     assert_status_code(logger, rcrs, 200, "Get courses failed")
     course_id = parse_courseid(rcrs.text, title)
 
-    await db.set("info", (username, password, user_id, course_id))
+    await db.set("info", (username, password, user_id, title, course_id))
 
     return f"User {username} Id {user_id} Course {course_id}"  # This is attack info
 
@@ -206,7 +223,7 @@ async def getflag_db(
     db: ChainDB,
 ) -> None:
     try:
-        username, password, user_id, course_id = await db.get("info")
+        username, password, user_id, title, course_id = await db.get("info")
     except KeyError:
         raise MumbleException("database entry missing")
 
@@ -219,6 +236,13 @@ async def getflag_db(
     flag = parse_flag(r.text)
 
     assert_in(task.flag, flag, "Flag missing")
+
+    # check if user is still course admin
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    is_admin = parse_is_admin(r.text, title, course_id)
+    if not is_admin:
+        raise MumbleException("User is not course admin")
 
 
 @checker.putflag(1)
