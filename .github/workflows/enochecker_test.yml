@@ -60,3 +60,4 @@ jobs:
         run: |
           (cd service && docker-compose kill)
           (cd checker && docker-compose kill)
+          
