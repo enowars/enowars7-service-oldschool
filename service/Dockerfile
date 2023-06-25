@@ -13,6 +13,8 @@ WORKDIR /service
 
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 
+COPY php.ini /usr/local/etc/php/php.ini
+
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
