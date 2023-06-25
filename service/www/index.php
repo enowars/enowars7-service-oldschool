@@ -4,8 +4,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL & ~E_NOTICE);
 
-use Twig\Extension\SandboxExtension; // Enable sandbox mode
-use Twig\Sandbox\SecurityPolicy; // Enable sandbox mode
+use Twig\Extension\SandboxExtension;
+use Twig\Sandbox\SecurityPolicy;
 
 $loader = new \Twig\Loader\FilesystemLoader('.');
 $twig = new \Twig\Environment($loader);
@@ -14,14 +14,13 @@ $parsedown = new Parsedown();
 $config = loadConfig('config/config.ini');
 
 $xmlMode = $config['xml']['mode'];
-$allowedTags = explode(',', $config['sandbox']['allowed_tags']); // Enable sandbox mode
-$allowedFilters = explode(',', $config['sandbox']['allowed_filters']); // Enable sandbox mode
-$allowedMethods = explode(',', $config['sandbox']['allowed_methods']); // Enable sandbox mode
-$allowedProperties = explode(',', $config['sandbox']['allowed_properties']); // Enable sandbox mode
-$allowedFunctions = explode(',', $config['sandbox']['allowed_functions']); // Enable sandbox mode
+$allowedTags = explode(',', $config['sandbox']['allowed_tags']);
+$allowedFilters = explode(',', $config['sandbox']['allowed_filters']);
+$allowedMethods = explode(',', $config['sandbox']['allowed_methods']);
+$allowedProperties = explode(',', $config['sandbox']['allowed_properties']);
+$allowedFunctions = explode(',', $config['sandbox']['allowed_functions']);
 
 $sandbox = new SandboxExtension(
-        // Enable sandbox mode
     new SecurityPolicy(
         $allowedTags,
         $allowedFilters,
@@ -30,8 +29,8 @@ $sandbox = new SandboxExtension(
         $allowedFunctions
     )
 );
-$twig->addExtension($sandbox); // Enable sandbox mode
-$twig->getExtension(SandboxExtension::class)->enableSandbox(); // Enable sandbox mode
+$twig->addExtension($sandbox);
+$twig->getExtension(SandboxExtension::class)->enableSandbox();
 
 $filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parsedown) {
     try {
@@ -39,9 +38,7 @@ $filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parse
         $template = $twig->createTemplate($html);
         return $template->render([]);
     } catch (\Exception $e) {
-        // Log error message
         error_log('Error rendering markdown: ' . $e->getMessage());
-        // Return a user-friendly error message or just an empty string
         return 'Error rendering markdown. Please check your input.';
     }
 });
@@ -181,13 +178,11 @@ switch ($action) {
 
             $dbh = getDbConnection();
             try {
-                // Insert user
                 $stmt = $dbh->prepare('INSERT INTO users (username, password, flag) VALUES (:username, :password, "")');
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':password', $hashedPassword);
                 $stmt->execute();
 
-                // Fetch user
                 $stmt = $dbh->prepare('SELECT * FROM users WHERE username = :username');
                 $stmt->bindParam(':username', $username);
                 $stmt->execute();
@@ -216,13 +211,11 @@ switch ($action) {
         $dbh = getDbConnection();
 
         if (isset($profile_user_id)) {
-            // Fetch the requested profile user
             $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
             $stmt->bindParam(":id", $profile_user_id, PDO::PARAM_INT);
             $stmt->execute();
             $profile_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Check if the logged in user is an admin of the course the profile user is in
             $stmt = $dbh->prepare("SELECT * FROM course_enrollments WHERE course_id IN (SELECT admin_of FROM users WHERE id = :admin_id) AND user_id = :user_id");
             $stmt->bindParam(':admin_id', $_SESSION['user']['id']);
             $stmt->bindParam(':user_id', $profile_user['id']);
