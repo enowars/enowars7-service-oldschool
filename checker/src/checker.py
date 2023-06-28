@@ -53,13 +53,6 @@ random.seed(int.from_bytes(os.urandom(16), "little"))
 alphabet = string.ascii_letters + string.digits
 
 
-def parse_flag(text: str):
-    soup = BeautifulSoup(text, "html.parser")
-    flag_label = soup.find("label", string="Flag:")
-    flag = flag_label.find_next_sibling().get_text(strip=True)
-    return flag
-
-
 def noise(min_len: int, max_len: int):
     len = random.randint(min_len, max_len)
     return "".join(random.choice(alphabet) for _ in range(len))
@@ -81,6 +74,16 @@ def assert_status_code(
         if errmsg is None:
             errmsg = f"{r.request.method} {r.request.url.path} failed"
         raise MumbleException(errmsg)
+
+
+def parse_flag(text: str):
+    try:
+        soup = BeautifulSoup(text, "html.parser")
+        flag_label = soup.find("label", string="Flag:")
+        flag = flag_label.find_next_sibling().get_text(strip=True)
+        return flag
+    except Exception:
+        raise MumbleException("No flag found")
 
 
 def parse_filename(text: str):
@@ -119,20 +122,23 @@ def parse_courseid(text: str, title: str):
 
 
 def parse_is_admin(html_text: str, course_name: str, course_id: str):
-    soup = BeautifulSoup(html_text, "html.parser")
+    try:
+        soup = BeautifulSoup(html_text, "html.parser")
 
-    course_items = soup.find_all("div", class_="course-item")
+        course_items = soup.find_all("div", class_="course-item")
 
-    for course_item in course_items:
-        course_title = " ".join(course_item.find("h3").text.split())
-        target_title = f"{course_name} (ID: {course_id})"
+        for course_item in course_items:
+            course_title = " ".join(course_item.find("h3").text.split())
+            target_title = f"{course_name} (ID: {course_id})"
 
-        if course_title == target_title:
-            admin_label = course_item.find("span", class_="label-admin")
-            if admin_label:
-                return True
+            if course_title == target_title:
+                admin_label = course_item.find("span", class_="label-admin")
+                if admin_label:
+                    return True
 
-    return False
+        return False
+    except Exception:
+        raise MumbleException("Could not parse admin status")
 
 
 def generate_xxe_payload(filename: str):
@@ -246,7 +252,7 @@ async def getflag_db(
 
 
 @checker.putflag(1)
-async def putflag_db(
+async def putflag_file(
     task: PutflagCheckerTaskMessage,
     logger: LoggerAdapter,
     client: AsyncClient,
@@ -274,7 +280,7 @@ async def putflag_db(
 
 
 @checker.getflag(1)
-async def getflag_db(
+async def getflag_file(
     task: GetflagCheckerTaskMessage,
     logger: LoggerAdapter,
     client: AsyncClient,
@@ -406,6 +412,137 @@ async def exploit_ssti(
     flag = searcher.search_flag(r.text)
     if flag is not None:
         return flag
+
+
+"""
+Checker functions - Getnoise, Putnoise, Havoc
+"""
+
+
+@checker.putnoise(0)
+async def putnoise_db(
+    task: PutnoiseCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> str:
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    # parse user id
+    r = await client.get("/index.php?action=home")
+    assert_status_code(logger, r, 200, "Get home page failed")
+    id_match = re.search(r'href="index\.php\?action=profile&id=(\d+)"', r.text)
+    user_id = id_match.group(1)
+
+    # update profile
+    name, flag = noise(5, 16), noise(10, 20)
+    data = {"username": username, "name": name, "flag": flag}
+    r = await client.post("/index.php?action=profile", data=data)
+    assert_status_code(logger, r, 200, "Update Profile failed")
+
+    # create new course and become course admin
+    title = noise(10, 12)
+    files = {
+        "title": (None, title),
+        "course_data": (
+            "newcourse.xml",
+            io.BytesIO(generate_course(noise(3, 5), noise(10, 20)).encode()),
+            "text/xml",
+        ),
+    }
+    r = await client.post("/index.php?action=courses", files=files)
+    assert_status_code(logger, r, 201, "Upload Course failed", info=data)
+
+    # parse course id
+    rcrs = await client.get("/index.php?action=courses")
+    assert_status_code(logger, rcrs, 200, "Get courses failed")
+    course_id = parse_courseid(rcrs.text, title)
+
+    await db.set("info", (username, password, user_id, title, course_id, flag))
+
+
+@checker.getnoise(0)
+async def getnoise_db(
+    task: GetnoiseCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> None:
+    try:
+        username, password, user_id, title, course_id, flag = await db.get("info")
+    except KeyError:
+        raise MumbleException("database entry missing")
+
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=login", data=data)
+    assert_status_code(logger, r, 302, "Login failed")
+
+    r = await client.get(f"/index.php?action=profile&id={user_id}")
+    assert_status_code(logger, r, 200, "Access profile failed")
+    flag_parsed = parse_flag(r.text)
+
+    # check if noise is still in profile
+    assert_in(flag, flag_parsed, "Flag in Profile missing")
+
+    # check if user is still course admin
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    is_admin = parse_is_admin(r.text, title, course_id)
+    if not is_admin:
+        raise MumbleException("User is not course admin")
+
+
+@checker.putnoise(1)
+async def putnoise_file(
+    task: PutnoiseCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> str:
+    # register user and login
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    # create the grade file
+    content = noise(10, 20)
+    file_obj = io.BytesIO(content.encode())
+
+    # post grade
+    r = await client.post("/index.php?action=grades", files={"grades": file_obj})
+    assert_status_code(logger, r, 201, "Upload Grade failed")
+    filename = parse_filename(r.text)
+    if not filename:
+        raise MumbleException("Filename missing")
+
+    await db.set("info", (username, password, content))
+
+
+@checker.getnoise(1)
+async def getnoise_file(
+    task: GetnoiseCheckerTaskMessage,
+    logger: LoggerAdapter,
+    client: AsyncClient,
+    db: ChainDB,
+) -> None:
+    try:
+        username, password, content = await db.get("info")
+    except KeyError:
+        raise MumbleException("database entry missing")
+
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=login", data=data)
+    assert_status_code(logger, r, 302, "Login failed")
+
+    r = await client.get(f"/index.php?action=grades")
+    assert_status_code(logger, r, 200, "Access grades failed")
+
+    assert_in(content, r.text, "File content missing")
 
 
 if __name__ == "__main__":
