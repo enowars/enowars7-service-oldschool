@@ -9,6 +9,7 @@ from enochecker3 import (
     ExploitCheckerTaskMessage,
     GetflagCheckerTaskMessage,
     GetnoiseCheckerTaskMessage,
+    HavocCheckerTaskMessage,
     InternalErrorException,
     MumbleException,
     PutflagCheckerTaskMessage,
@@ -139,6 +140,40 @@ def parse_is_admin(html_text: str, course_name: str, course_id: str):
         return False
     except Exception:
         raise MumbleException("Could not parse admin status")
+
+
+def parse_is_joined(html_text: str, course_id: str):
+    try:
+        soup = BeautifulSoup(html_text, "html.parser")
+
+        course_items = soup.find_all("div", class_="course-item")
+
+        for course_item in course_items:
+            course_title = " ".join(
+                " ".join(course_item.find("h3").text.split()).split()[1:]
+            )
+            target_title = f"(ID: {course_id})"
+
+            if course_title == target_title:
+                joined_label = course_item.find("span", class_="label-joined")
+                if joined_label:
+                    return True
+
+        return False
+    except Exception:
+        raise MumbleException("Could not parse joined status")
+
+
+def parse_random_courseid(text: str):
+    try:
+        soup = BeautifulSoup(text, "html.parser")
+        course_ids = [
+            int(input_tag["value"])
+            for input_tag in soup.find_all("input", attrs={"name": "course_id"})
+        ]
+        return random.choice(course_ids)
+    except Exception:
+        raise MumbleException("No Course found")
 
 
 def generate_xxe_payload(filename: str):
@@ -543,6 +578,89 @@ async def getnoise_file(
     assert_status_code(logger, r, 200, "Access grades failed")
 
     assert_in(content, r.text, "File content missing")
+
+
+@checker.havoc(0)
+async def havoc_registerlogoutlogin(
+    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
+):
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    r = await client.get("/index.php?action=logout")
+    assert_status_code(logger, r, 302, "Logout failed")
+
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=login", data=data)
+    assert_status_code(logger, r, 302, "Login failed")
+
+
+@checker.havoc(1)
+async def havoc_joincourse(
+    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
+):
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    course_id = parse_random_courseid(r.text)
+
+    data = {"course_id": course_id}
+    r = await client.post("/index.php?action=join_course", data=data)
+    assert_status_code(logger, r, 302, "Join course failed")
+
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    is_joined = parse_is_joined(r.text, course_id)
+    if not is_joined:
+        raise MumbleException("User is not joined")
+
+
+@checker.havoc(2)
+async def havoc_aboutus(
+    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
+):
+    r = await client.get("/index.php?action=about_us")
+    assert_status_code(logger, r, 200, "Access about us failed")
+
+
+@checker.havoc(3)
+async def havoc_aboutmemarkdown(
+    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
+):
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    r = await client.get("/index.php?action=profile")
+    assert_status_code(logger, r, 200, "Access profile failed")
+
+    title, p, code = noise(10, 20), noise(10, 20), noise(10, 20)
+
+    test_markdown = f"""
+## {title}
+{p}
+```
+{code}
+```
+"""
+    title_rendered = f"<h2>{title}</h2>"
+    p_rendered = f"<p>{p}</p>"
+    code_rendered = f"<pre><code>{code}</code></pre>"
+    data = {"about_me": test_markdown}
+    r = await client.post("/index.php?action=profile", data=data)
+    assert_status_code(logger, r, 200, "Update profile failed")
+
+    if not (
+        title_rendered in r.text and p_rendered in r.text and code_rendered in r.text
+    ):
+        raise MumbleException("Markdown not rendered correctly")
 
 
 if __name__ == "__main__":
