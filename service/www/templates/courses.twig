@@ -37,7 +37,9 @@
 							(ID:
 							{{ course.id }})</h3>
 
-						<div class="course-data">{{ course.course_data|raw }}</div>
+						{% if user.admin_of == course.id or course.user_enrolled %}
+							<div class="course-data">{{ course.course_data|raw }}</div>
+						{% endif %}
 
 						{% if user.admin_of == course.id %}
 							<span class="label label-admin">Admin</span>

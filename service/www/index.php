@@ -340,17 +340,19 @@ switch ($action) {
         }, []);
 
         foreach ($courses as &$course) {
-            $dom = new DOMDocument();
-            $dom->loadXML($course['course_data'], $xmlMode);
-            $course_data_element = $dom->getElementsByTagName('data')->item(0);
-            $course['course_data'] = $dom->saveXML($course_data_element);
-
             $course['users'] = $enrollmentsPerCourse[$course['id']] ?? [];
             $course['user_enrolled'] = in_array($_SESSION['user']['id'], $course['users']);
-            if ($_SESSION['user']['admin_of'] == $course['id']) {
-                $stmt = $dbh->prepare("SELECT users.* FROM users WHERE id IN (" . str_repeat('?,', count($course['users']) - 1) . '?)');
-                $stmt->execute($course['users']);
-                $course['enrolled_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if ($_SESSION['user']['admin_of'] == $course['id'] || $course['user_enrolled']) {
+                $dom = new DOMDocument();
+                $dom->loadXML($course['course_data'], $xmlMode);
+                $course_data_element = $dom->getElementsByTagName('data')->item(0);
+                $course['course_data'] = $dom->saveXML($course_data_element);
+
+                if ($_SESSION['user']['admin_of'] == $course['id']) {
+                    $stmt = $dbh->prepare("SELECT users.* FROM users WHERE id IN (" . str_repeat('?,', count($course['users']) - 1) . '?)');
+                    $stmt->execute($course['users']);
+                    $course['enrolled_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                }
             }
         }
 
