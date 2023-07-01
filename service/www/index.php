@@ -50,7 +50,24 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
+function userExists($user_id) {
+    $dbh = getDbConnection();
+    $stmt = $dbh->prepare("SELECT COUNT(*) FROM users WHERE id = :user_id");
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+    $userCount = $stmt->fetchColumn();
+    return $userCount > 0;
+}
 
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id']->id;
+    // If the user was deleted, log them out
+    if (!userExists($user_id)) {
+        session_destroy();
+        header('Location: /login.php');
+        exit;
+    }
+}
 
 function loadConfig($filePath)
 {
