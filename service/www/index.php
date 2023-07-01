@@ -356,6 +356,8 @@ switch ($action) {
             }
         }
 
+        $courses = array_reverse($courses);
+        
         echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message]);
         break;
 
