@@ -10,10 +10,10 @@ services:
       - oldschool-grades:/service/grades
     depends_on:
       - db
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
 
   db:
     image: mysql:8.0
