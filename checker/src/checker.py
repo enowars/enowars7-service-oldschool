@@ -598,30 +598,6 @@ async def havoc_registerlogoutlogin(
 
 
 @checker.havoc(1)
-async def havoc_joincourse(
-    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
-):
-    username, password = noise(10, 15), noise(16, 20)
-    data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
-    assert_status_code(logger, r, 302, "Register failed")
-
-    r = await client.get("/index.php?action=courses")
-    assert_status_code(logger, r, 200, "Get courses failed")
-    course_id = parse_random_courseid(r.text)
-
-    data = {"course_id": course_id}
-    r = await client.post("/index.php?action=join_course", data=data)
-    assert_status_code(logger, r, 302, "Join course failed")
-
-    r = await client.get("/index.php?action=courses")
-    assert_status_code(logger, r, 200, "Get courses failed")
-    is_joined = parse_is_joined(r.text, course_id)
-    if not is_joined:
-        raise MumbleException("User is not joined")
-
-
-@checker.havoc(2)
 async def havoc_aboutus(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
@@ -629,7 +605,7 @@ async def havoc_aboutus(
     assert_status_code(logger, r, 200, "Access about us failed")
 
 
-@checker.havoc(3)
+@checker.havoc(2)
 async def havoc_aboutmemarkdown(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
@@ -661,6 +637,32 @@ async def havoc_aboutmemarkdown(
         title_rendered in r.text and p_rendered in r.text and code_rendered in r.text
     ):
         raise MumbleException("Markdown not rendered correctly")
+
+
+@checker.havoc(3)
+async def havoc_joincourse(
+    task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
+):
+    username, password = noise(10, 15), noise(16, 20)
+    data = {"username": username, "password": password}
+    r = await client.post("/index.php?action=register", data=data)
+    assert_status_code(logger, r, 302, "Register failed")
+
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    course_id = parse_random_courseid(r.text)
+    if not course_id:
+        raise MumbleException("No course found")
+
+    data = {"course_id": course_id}
+    r = await client.post("/index.php?action=join_course", data=data)
+    assert_status_code(logger, r, 302, "Join course failed")
+
+    r = await client.get("/index.php?action=courses")
+    assert_status_code(logger, r, 200, "Get courses failed")
+    is_joined = parse_is_joined(r.text, course_id)
+    if not is_joined:
+        raise MumbleException("User is not joined")
 
 
 if __name__ == "__main__":
