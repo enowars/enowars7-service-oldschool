@@ -50,7 +50,8 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
-function userExists($user_id) {
+function userExists($user_id)
+{
     $dbh = getDbConnection();
     $stmt = $dbh->prepare("SELECT COUNT(*) FROM users WHERE id = :user_id");
     $stmt->bindParam(':user_id', $user_id);
@@ -327,31 +328,33 @@ switch ($action) {
         $stmt->execute();
         $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $course_ids = array_column($courses, 'id');
+
+        $stmt = $dbh->prepare("SELECT course_id, user_id FROM course_enrollments WHERE course_id IN (" . str_repeat('?,', count($course_ids) - 1) . '?)');
+        $stmt->execute($course_ids);
+        $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $enrollmentsPerCourse = array_reduce($enrollments, function ($carry, $item) {
+            $carry[$item['course_id']][] = $item['user_id'];
+            return $carry;
+        }, []);
+
         foreach ($courses as &$course) {
             $dom = new DOMDocument();
             $dom->loadXML($course['course_data'], $xmlMode);
             $course_data_element = $dom->getElementsByTagName('data')->item(0);
             $course['course_data'] = $dom->saveXML($course_data_element);
 
-            $stmt = $dbh->prepare("SELECT user_id FROM course_enrollments WHERE course_id = :course_id");
-            $stmt->bindParam(':course_id', $course['id']);
-            $stmt->execute();
-            $course['users'] = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
-
-            if (in_array($_SESSION['user']['id'], $course['users'])) {
-                $course['user_enrolled'] = true;
-            } else {
-                $course['user_enrolled'] = false;
-            }
-
+            $course['users'] = $enrollmentsPerCourse[$course['id']] ?? [];
+            $course['user_enrolled'] = in_array($_SESSION['user']['id'], $course['users']);
             if ($_SESSION['user']['admin_of'] == $course['id']) {
-                $stmt = $dbh->prepare("SELECT users.* FROM users JOIN course_enrollments ON users.id = course_enrollments.user_id WHERE course_enrollments.course_id = :course_id");
-                $stmt->bindParam(':course_id', $course['id']);
-                $stmt->execute();
+                $stmt = $dbh->prepare("SELECT users.* FROM users WHERE id IN (" . str_repeat('?,', count($course['users']) - 1) . '?)');
+                $stmt->execute($course['users']);
                 $course['enrolled_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'enrolled_users' => $enrolled_users ?? null]);
+
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message]);
         break;
 
     case 'join_course':
