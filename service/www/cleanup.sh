@@ -11,19 +11,19 @@ while IFS= read -r row; do
         rm -rf "$path"
     fi
 done < <(mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"SELECT filename FROM grades WHERE created_at < NOW() - INTERVAL 30 MINUTE;")
+"SELECT filename FROM grades WHERE created_at < NOW() - INTERVAL 10 MINUTE;")
 
 mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"DELETE FROM grades WHERE created_at < NOW() - INTERVAL 30 MINUTE;"
+"DELETE FROM grades WHERE created_at < NOW() - INTERVAL 10 MINUTE;"
 
 mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"UPDATE users SET admin_of = NULL WHERE admin_of IN (SELECT id FROM courses WHERE created_at < NOW() - INTERVAL 30 MINUTE);"
+"UPDATE users SET admin_of = NULL WHERE admin_of IN (SELECT id FROM courses WHERE created_at < NOW() - INTERVAL 10 MINUTE);"
 
 mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"DELETE FROM course_enrollments WHERE course_id IN (SELECT id FROM courses WHERE created_at < NOW() - INTERVAL 30 MINUTE);"
+"DELETE FROM course_enrollments WHERE course_id IN (SELECT id FROM courses WHERE created_at < NOW() - INTERVAL 10 MINUTE);"
 
 mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"DELETE FROM courses WHERE created_at < NOW() - INTERVAL 30 MINUTE;"
+"DELETE FROM courses WHERE created_at < NOW() - INTERVAL 10 MINUTE;"
 
 mysql -u $DB_USERNAME -p$DB_PASSWORD -h $DB_HOST -D $DB_NAME -e \
-"DELETE FROM users WHERE created_at < NOW() - INTERVAL 30 MINUTE;"
+"DELETE FROM users WHERE created_at < NOW() - INTERVAL 10 MINUTE;"
