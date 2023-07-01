@@ -334,8 +334,7 @@ switch ($action) {
                 $course['enrolled_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
-
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'enrolled_users' => $enrolled_users]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'enrolled_users' => $enrolled_users ?? null]);
         break;
 
     case 'join_course':
