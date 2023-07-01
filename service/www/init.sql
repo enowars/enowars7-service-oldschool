@@ -36,17 +36,6 @@ CREATE TABLE IF NOT EXISTS grades (
 );
 
 INSERT INTO
-	users (id, username, password, name, flag)
-VALUES
-	(
-		1,
-		"user",
-		"$2y$10$Pj60GRAnLmqvkZ/CcQfs1OEQjoLzSgZdmc173EzkjJf.xGlbiJ/4u",
-		"",
-		"FLAG{this_is_also_just_test_flag!}"
-	);
-
-INSERT INTO
 	courses (id, title, course_data, created_by, is_private)
 VALUES
 	(

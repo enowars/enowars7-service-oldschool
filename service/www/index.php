@@ -413,7 +413,7 @@ switch ($action) {
         break;
 
     case 'about':
-        echo $twig->render('templates/about.twig', ['user' => $_SESSION['user']]);
+        echo $twig->render('templates/about.twig', ['user' => $_SESSION['user'] ?? null]);
         break;
 
     default:
