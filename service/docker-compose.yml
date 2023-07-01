@@ -13,7 +13,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '2'
 
   db:
     image: mysql:8.0
