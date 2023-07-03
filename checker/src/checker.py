@@ -107,19 +107,16 @@ def parse_filecontent(text: str):
         raise MumbleException("No grade filecontent found")
 
 
-def parse_courseid(text: str, title: str):
-    soup = BeautifulSoup(text, "html.parser")
-    li_tags = soup.find_all("li")
-
-    for li in li_tags:
-        if li.h3:
-            cleaned_name = li.h3.text.strip().replace("\n", "")
-            if title in cleaned_name:
-                id_value = re.search(r"\(ID:\s*(\d+)\s*\)", cleaned_name)
-                if id_value:
-                    return id_value.group(1)
-
-    raise MumbleException("No Course Id found")
+def parse_courseid(text: str):
+    try:
+        pattern = r'ID: (\d+)'
+        match = re.search(pattern, text)
+        if match:
+            course_id = match.group(1)
+            return course_id
+        raise MumbleException("No Course Id found")
+    except Exception:
+        raise MumbleException("No Course Id found")
 
 
 def parse_is_admin(html_text: str, course_name: str, course_id: str):
@@ -245,11 +242,7 @@ async def putflag_db(
     }
     r = await client.post("/index.php?action=courses", files=files)
     assert_status_code(logger, r, 201, "Upload Course failed", info=data)
-
-    # parse course id
-    rcrs = await client.get("/index.php?action=courses")
-    assert_status_code(logger, rcrs, 200, "Get courses failed")
-    course_id = parse_courseid(rcrs.text, title)
+    course_id = parse_courseid(r.text)
 
     await db.set("info", (username, password, user_id, title, course_id))
 
@@ -491,11 +484,8 @@ async def putnoise_db(
     }
     r = await client.post("/index.php?action=courses", files=files)
     assert_status_code(logger, r, 201, "Upload Course failed", info=data)
-
-    # parse course id
-    rcrs = await client.get("/index.php?action=courses")
-    assert_status_code(logger, rcrs, 200, "Get courses failed")
-    course_id = parse_courseid(rcrs.text, title)
+    course_id = parse_courseid(r.text)
+    print("\n\n\n\n"+course_id+"\n\n\n\n")
 
     await db.set("info", (username, password, user_id, title, course_id, flag))
 

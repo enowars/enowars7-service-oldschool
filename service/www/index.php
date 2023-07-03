@@ -311,6 +311,7 @@ switch ($action) {
                         $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                         $stmt->execute();
 
+                        $message="Course added successfully with ID: $course_id";
                         http_response_code(201);
                     } catch (PDOException $e) {
                         $message = "Error adding course.";
@@ -330,14 +331,18 @@ switch ($action) {
 
         $course_ids = array_column($courses, 'id');
 
-        $stmt = $dbh->prepare("SELECT course_id, user_id FROM course_enrollments WHERE course_id IN (" . str_repeat('?,', count($course_ids) - 1) . '?)');
-        $stmt->execute($course_ids);
-        $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!empty($course_ids)) {
+            $stmt = $dbh->prepare("SELECT course_id, user_id FROM course_enrollments WHERE course_id IN (" . str_repeat('?,', count($course_ids) - 1) . '?)');
+            $stmt->execute($course_ids);
+            $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $enrollmentsPerCourse = array_reduce($enrollments, function ($carry, $item) {
-            $carry[$item['course_id']][] = $item['user_id'];
-            return $carry;
-        }, []);
+            $enrollmentsPerCourse = array_reduce($enrollments, function ($carry, $item) {
+                $carry[$item['course_id']][] = $item['user_id'];
+                return $carry;
+            }, []);
+        } else {
+            $enrollmentsPerCourse = [];
+        }
 
         foreach ($courses as &$course) {
             $course['users'] = $enrollmentsPerCourse[$course['id']] ?? [];
@@ -357,7 +362,7 @@ switch ($action) {
         }
 
         $courses = array_reverse($courses);
-        
+
         echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message]);
         break;
 
