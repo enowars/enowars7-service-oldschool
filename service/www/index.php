@@ -50,16 +50,6 @@ session_start();
 
 $action = $_GET['action'] ?? 'home';
 
-function userExists($user_id)
-{
-    $dbh = getDbConnection();
-    $stmt = $dbh->prepare("SELECT COUNT(*) FROM users WHERE id = :user_id");
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->execute();
-    $userCount = $stmt->fetchColumn();
-    return $userCount > 0;
-}
-
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id']->id;
     // If the user was deleted, log them out
@@ -67,6 +57,28 @@ if (isset($_SESSION['user_id'])) {
         session_destroy();
         header('Location: /login.php');
         exit;
+    }
+}
+
+class DB
+{
+    private static $dbh = null;
+    
+    private function __construct() {}
+
+    public static function getInstance()
+    {
+        if (self::$dbh === null) {
+            try {
+                self::$dbh = new PDO('mysql:host=db;dbname=oldschool', 'oldschool', 'oldschoolpassword');
+                self::$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                error_log("Database connection established.");
+            } catch (PDOException $e) {
+                error_log("Error connecting to the database: " . $e->getMessage());
+                throw $e;
+            }
+        }
+        return self::$dbh;
     }
 }
 
@@ -79,26 +91,19 @@ function loadConfig($filePath)
     return $config;
 }
 
-function getDbConnection()
+function userExists($user_id)
 {
-    static $dbh = null;
-    if ($dbh === null) {
-        try {
-            $dbh = new PDO('mysql:host=db;dbname=oldschool', 'oldschool', 'oldschoolpassword');
-            $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            error_log("Database connection established.");
-        } catch (PDOException $e) {
-            error_log("Error connecting to the database: " . $e->getMessage());
-            throw $e;
-        }
-    }
-    return $dbh;
+    $dbh = DB::getInstance();
+    $stmt = $dbh->prepare("SELECT COUNT(*) FROM users WHERE id = :user_id");
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+    $userCount = $stmt->fetchColumn();
+    return $userCount > 0;
 }
 
 function updateProfile($userId, $profileData)
 {
-    $dbh = getDbConnection();
+    $dbh = DB::getInstance();
     $sql = 'UPDATE users SET ';
     $params = [];
     $first = true;
@@ -125,7 +130,7 @@ function updateProfile($userId, $profileData)
 
 function getAllCourses()
 {
-    $dbh = getDbConnection();
+    $dbh = DB::getInstance();
     $stmt = $dbh->prepare("SELECT * FROM courses");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -133,7 +138,7 @@ function getAllCourses()
 
 function addCourse($title, $description, $user_id)
 {
-    $dbh = getDbConnection();
+    $dbh = DB::getInstance();
     $stmt = $dbh->prepare("INSERT INTO courses (title, description, user_id) VALUES (:title, :description, :user_id)");
     $stmt->bindParam(':title', $title);
     $stmt->bindParam(':description', $description);
@@ -158,7 +163,7 @@ switch ($action) {
             $username = $_POST['username'];
             $password = $_POST['password'];
 
-            $dbh = getDbConnection();
+            $dbh = DB::getInstance();
             $stmt = $dbh->prepare('SELECT * FROM users WHERE username = :username');
             $stmt->bindParam(':username', $username);
             $stmt->execute();
@@ -194,7 +199,7 @@ switch ($action) {
             $password = $_POST['password'];
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-            $dbh = getDbConnection();
+            $dbh = DB::getInstance();
             try {
                 $stmt = $dbh->prepare('INSERT INTO users (username, password, flag) VALUES (:username, :password, "")');
                 $stmt->bindParam(':username', $username);
@@ -226,7 +231,7 @@ switch ($action) {
 
         $profile_user = $_SESSION['user'];
         $profile_user_id = $_GET['id'] ?? null;
-        $dbh = getDbConnection();
+        $dbh = DB::getInstance();
 
         if (isset($profile_user_id)) {
             $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
@@ -272,7 +277,7 @@ switch ($action) {
             exit;
         }
 
-        $dbh = getDbConnection();
+        $dbh = DB::getInstance();
         $message = null;
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -374,7 +379,7 @@ switch ($action) {
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $course_id = $_POST['course_id'];
-            $dbh = getDbConnection();
+            $dbh = DB::getInstance();
 
             $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id");
             $stmt->bindParam(':course_id', $course_id);
@@ -415,7 +420,7 @@ switch ($action) {
                     $destination = "grades/" . $filename;
                     move_uploaded_file($_FILES['grades']['tmp_name'], $destination);
 
-                    $dbh = getDbConnection();
+                    $dbh = DB::getInstance();
                     $stmt = $dbh->prepare("INSERT INTO grades (user_id, filename) VALUES (:user_id, :filename)");
                     $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                     $stmt->bindParam(':filename', $filename);
@@ -429,7 +434,7 @@ switch ($action) {
             }
         }
 
-        $dbh = getDbConnection();
+        $dbh = DB::getInstance();
         $stmt = $dbh->prepare("SELECT * FROM grades WHERE user_id = :user_id");
         $stmt->bindParam(':user_id', $_SESSION['user']['id']);
         $stmt->execute();
