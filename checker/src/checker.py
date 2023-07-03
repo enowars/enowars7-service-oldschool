@@ -76,10 +76,16 @@ def assert_status_code(
             errmsg = f"{r.request.method} {r.request.url.path} failed"
         raise MumbleException(errmsg)
 
+def parsesoup(text: str):
+    try:
+        soup = BeautifulSoup(text)
+        return soup
+    except Exception:
+        raise MumbleException("Could not parse html")
 
 def parse_flag(text: str):
     try:
-        soup = BeautifulSoup(text, "html.parser")
+        soup = parsesoup(text)
         flag_label = soup.find("label", string="Flag:")
         flag = flag_label.find_next_sibling().get_text(strip=True)
         return flag
@@ -88,7 +94,7 @@ def parse_flag(text: str):
 
 
 def parse_filename(text: str):
-    soup = BeautifulSoup(text, "html.parser")
+    soup = parsesoup(text)
     last_li = soup.find("li")
     if last_li:
         filename = last_li.text.split("\n")[1].strip()
@@ -98,7 +104,7 @@ def parse_filename(text: str):
 
 
 def parse_filecontent(text: str):
-    soup = BeautifulSoup(text, "html.parser")
+    soup = parsesoup(text)
     last_li = soup.find("li")
     if last_li:
         filename = last_li.text.split("\n")[3].strip()
@@ -121,7 +127,7 @@ def parse_courseid(text: str):
 
 def parse_is_admin(html_text: str, course_name: str, course_id: str):
     try:
-        soup = BeautifulSoup(html_text, "html.parser")
+        soup = parsesoup(html_text)
 
         course_items = soup.find_all("div", class_="course-item")
 
@@ -141,7 +147,7 @@ def parse_is_admin(html_text: str, course_name: str, course_id: str):
 
 def parse_is_joined(html_text: str, course_id: str):
     try:
-        soup = BeautifulSoup(html_text, "html.parser")
+        soup = parsesoup(html_text)
 
         course_items = soup.find_all("div", class_="course-item")
 
@@ -163,7 +169,7 @@ def parse_is_joined(html_text: str, course_id: str):
 
 def parse_random_courseid(text: str):
     try:
-        soup = BeautifulSoup(text, "html.parser")
+        soup = parsesoup(text)
         course_ids = [
             int(input_tag["value"])
             for input_tag in soup.find_all("input", attrs={"name": "course_id"})
