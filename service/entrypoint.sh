@@ -8,10 +8,12 @@ done
 # init database
 mysql -h db -u oldschool -poldschoolpassword oldschool < /service/init.sql
 
-# run cleanup script
+/etc/init.d/nginx start
+/etc/init.d/php7.4-fpm start
+
 while true; do
 	/service/cleanup.sh
 	sleep 60
 done &
 
-exec apache2-foreground
+tail -f /var/log/nginx/error.log

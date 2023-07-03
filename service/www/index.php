@@ -45,21 +45,6 @@ $filter = new \Twig\TwigFilter('markdown', function ($string) use ($twig, $parse
 
 $twig->addFilter($filter);
 
-
-session_start();
-
-$action = $_GET['action'] ?? 'home';
-
-if (isset($_SESSION['user_id'])) {
-    $user_id = $_SESSION['user_id']->id;
-    // If the user was deleted, log them out
-    if (!userExists($user_id)) {
-        session_destroy();
-        header('Location: /login.php');
-        exit;
-    }
-}
-
 class DB
 {
     private static $dbh = null;
@@ -82,13 +67,19 @@ class DB
     }
 }
 
-function loadConfig($filePath)
-{
-    $config = parse_ini_file($filePath, true);
-    if (!$config) {
-        throw new Exception("Failed to load configuration.");
+
+session_start();
+
+$action = $_GET['action'] ?? 'home';
+
+if (isset($_SESSION['user'])) {
+    $user_id = $_SESSION['user']['id'];
+    // If the user was deleted, log them out
+    if (!userExists($user_id)) {
+        session_destroy();
+        header('Location: /index.php?action=login');
+        exit;
     }
-    return $config;
 }
 
 function userExists($user_id)
@@ -99,6 +90,15 @@ function userExists($user_id)
     $stmt->execute();
     $userCount = $stmt->fetchColumn();
     return $userCount > 0;
+}
+
+function loadConfig($filePath)
+{
+    $config = parse_ini_file($filePath, true);
+    if (!$config) {
+        throw new Exception("Failed to load configuration.");
+    }
+    return $config;
 }
 
 function updateProfile($userId, $profileData)
