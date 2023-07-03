@@ -485,7 +485,6 @@ async def putnoise_db(
     r = await client.post("/index.php?action=courses", files=files)
     assert_status_code(logger, r, 201, "Upload Course failed", info=data)
     course_id = parse_courseid(r.text)
-    print("\n\n\n\n"+course_id+"\n\n\n\n")
 
     await db.set("info", (username, password, user_id, title, course_id, flag))
 
