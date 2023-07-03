@@ -3,6 +3,9 @@
 {% block content %}
 	<div class="grades-container">
 		<h1>Your Grades</h1>
+		{% if message %}
+			<p>{{ message }}</p>
+		{% endif %}
 
 		<h2>Upload Grades</h2>
 		<form method="post" action="index.php?action=grades" enctype="multipart/form-data" class="grades-form">

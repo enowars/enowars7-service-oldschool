@@ -406,6 +406,7 @@ switch ($action) {
             header('Location: index.php?action=login');
             exit;
         }
+        $message = null;
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']) {
             if (isset($_FILES['grades']) && $_FILES['grades']['error'] == 0) {
@@ -419,6 +420,8 @@ switch ($action) {
                     $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                     $stmt->bindParam(':filename', $filename);
                     $stmt->execute();
+
+                    $message="Grade added successfully with Name: $filename";
                     http_response_code(201);
                 } catch (PDOException $e) {
                     $message = "Error adding grades.";
@@ -437,7 +440,7 @@ switch ($action) {
             $grade['content'] = file_exists($filename) ? file_get_contents($filename) : 'File not found';
         }
 
-        echo $twig->render('templates/grades.twig', ['grades' => $grades, 'user' => $_SESSION['user']]);
+        echo $twig->render('templates/grades.twig', ['grades' => $grades, 'user' => $_SESSION['user'], 'message' => $message]);
         break;
 
     case 'about':

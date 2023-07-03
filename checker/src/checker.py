@@ -85,13 +85,15 @@ def parse_soup(text: str):
 
 
 def parse_filename(text: str):
-    soup = parse_soup(text)
-    last_li = soup.find("li")
-    if last_li:
-        filename = last_li.text.split("\n")[1].strip()
-        return filename
-    else:
-        raise MumbleException("No grade filename found")
+    try:
+        pattern = r'Name: ([\w\d_]+)'
+        match = re.search(pattern, text)
+        if match:
+            grade_name = match.group(1)
+            return grade_name
+        raise MumbleException("No Grade Name found")
+    except Exception:
+        raise MumbleException("No Grade Name found")
 
 
 def parse_filecontent(text: str):
@@ -158,14 +160,13 @@ def parse_is_joined(html_text: str, course_id: str):
         raise MumbleException("Could not parse joined status")
 
 
-def parse_random_courseid(text: str):
+def parse_first_courseid(text: str):
     try:
-        soup = parse_soup(text)
-        course_ids = [
-            int(input_tag["value"])
-            for input_tag in soup.find_all("input", attrs={"name": "course_id"})
-        ]
-        return random.choice(course_ids)
+        soup = BeautifulSoup(text, 'html.parser')
+        input_tag = soup.find("input", attrs={"name": "course_id"})
+        if input_tag is None:
+            raise MumbleException("No Course found")
+        return int(input_tag["value"])
     except Exception:
         raise MumbleException("No Course found")
 
@@ -633,7 +634,7 @@ async def havoc_joincourse(
 
     r = await client.get("/index.php?action=courses")
     assert_status_code(logger, r, 200, "Get courses failed")
-    course_id = parse_random_courseid(r.text)
+    course_id = parse_first_courseid(r.text)
     if not course_id:
         raise MumbleException("No course found")
 
