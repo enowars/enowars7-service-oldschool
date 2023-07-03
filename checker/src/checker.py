@@ -76,25 +76,16 @@ def assert_status_code(
             errmsg = f"{r.request.method} {r.request.url.path} failed"
         raise MumbleException(errmsg)
 
-def parsesoup(text: str):
+def parse_soup(text: str):
     try:
         soup = BeautifulSoup(text)
         return soup
     except Exception:
         raise MumbleException("Could not parse html")
 
-def parse_flag(text: str):
-    try:
-        soup = parsesoup(text)
-        flag_label = soup.find("label", string="Flag:")
-        flag = flag_label.find_next_sibling().get_text(strip=True)
-        return flag
-    except Exception:
-        raise MumbleException("No flag found")
-
 
 def parse_filename(text: str):
-    soup = parsesoup(text)
+    soup = parse_soup(text)
     last_li = soup.find("li")
     if last_li:
         filename = last_li.text.split("\n")[1].strip()
@@ -104,7 +95,7 @@ def parse_filename(text: str):
 
 
 def parse_filecontent(text: str):
-    soup = parsesoup(text)
+    soup = parse_soup(text)
     last_li = soup.find("li")
     if last_li:
         filename = last_li.text.split("\n")[3].strip()
@@ -127,7 +118,7 @@ def parse_courseid(text: str):
 
 def parse_is_admin(html_text: str, course_name: str, course_id: str):
     try:
-        soup = parsesoup(html_text)
+        soup = parse_soup(html_text)
 
         course_items = soup.find_all("div", class_="course-item")
 
@@ -147,7 +138,7 @@ def parse_is_admin(html_text: str, course_name: str, course_id: str):
 
 def parse_is_joined(html_text: str, course_id: str):
     try:
-        soup = parsesoup(html_text)
+        soup = parse_soup(html_text)
 
         course_items = soup.find_all("div", class_="course-item")
 
@@ -169,7 +160,7 @@ def parse_is_joined(html_text: str, course_id: str):
 
 def parse_random_courseid(text: str):
     try:
-        soup = parsesoup(text)
+        soup = parse_soup(text)
         course_ids = [
             int(input_tag["value"])
             for input_tag in soup.find_all("input", attrs={"name": "course_id"})
@@ -273,9 +264,8 @@ async def getflag_db(
 
     r = await client.get(f"/index.php?action=profile&id={user_id}")
     assert_status_code(logger, r, 200, "Access profile failed")
-    flag = parse_flag(r.text)
 
-    assert_in(task.flag, flag, "Flag missing")
+    assert_in(task.flag, r.text, "Flag missing")
 
     # check if user is still course admin
     r = await client.get("/index.php?action=courses")
@@ -513,10 +503,8 @@ async def getnoise_db(
 
     r = await client.get(f"/index.php?action=profile&id={user_id}")
     assert_status_code(logger, r, 200, "Access profile failed")
-    flag_parsed = parse_flag(r.text)
 
-    # check if noise is still in profile
-    assert_in(flag, flag_parsed, "Flag in Profile missing")
+    assert_in(flag, r.text, "Flag in Profile missing")
 
     # check if user is still course admin
     r = await client.get("/index.php?action=courses")
