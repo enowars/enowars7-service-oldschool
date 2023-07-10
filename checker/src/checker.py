@@ -678,7 +678,7 @@ async def havoc_joincourse(
 
     r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
-    course_id = parse_first_courseid(r.text)
+    course_id = int(parse_first_courseid(r.text))
     if not course_id:
         raise MumbleException("No course found")
 
@@ -686,13 +686,13 @@ async def havoc_joincourse(
     r = await client.post(
         "/index.php?action=courses", data=data, headers={"User-Agent": agent}
     )
-    assert_status_code(logger, r, 302, "Join course failed")
+    assert_status_code(logger, r, 200, "Join course failed")
 
     r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     is_joined = parse_is_joined(r.text, course_id)
     if not is_joined:
-        raise MumbleException("User is not joined")
+        raise MumbleException("User is not in course")
 
 
 if __name__ == "__main__":

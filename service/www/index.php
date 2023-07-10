@@ -48,8 +48,10 @@ $twig->addFilter($filter);
 class DB
 {
     private static $dbh = null;
-    
-    private function __construct() {}
+
+    private function __construct()
+    {
+    }
 
     public static function getInstance()
     {
@@ -283,11 +285,24 @@ switch ($action) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['course_id'])) {
                 $course_id = $_POST['course_id'];
-                $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+                $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id AND is_private = 0");
                 $stmt->bindParam(':course_id', $course_id);
-                $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                 $stmt->execute();
+
+                $course = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($course) {
+                    $stmt = $dbh->prepare("INSERT INTO course_enrollments (course_id, user_id) VALUES (:course_id, :user_id)");
+                    $stmt->bindParam(':course_id', $course_id);
+                    $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+                    $stmt->execute();
+                } else {
+                    $message = "Course is private!";
+                }
             } else {
+                if ($_SESSION['user']['admin_of'] !== NULL) {
+                    $message = "You are already an admin of another course. This course will soon be deleted.<br>";
+                }
                 $title = $_POST['title'];
                 $course_data = file_get_contents($_FILES['course_data']['tmp_name']);
                 $is_private = isset($_POST['is_private']) ? 1 : 0;
@@ -316,7 +331,7 @@ switch ($action) {
                         $stmt->bindParam(':user_id', $_SESSION['user']['id']);
                         $stmt->execute();
 
-                        $message="Course added successfully with ID: $course_id";
+                        $message = $message . "Course added successfully with ID: $course_id";
                         http_response_code(201);
                     } catch (PDOException $e) {
                         $message = "Error adding course.";
@@ -391,7 +406,7 @@ switch ($action) {
                     $stmt->bindParam(':filename', $filename);
                     $stmt->execute();
 
-                    $message="Grade added successfully with Name: $filename";
+                    $message = "Grade added successfully with Name: $filename";
                     http_response_code(201);
                 } catch (PDOException $e) {
                     $message = "Error adding grades.";
