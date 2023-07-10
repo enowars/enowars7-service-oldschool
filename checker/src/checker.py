@@ -684,7 +684,7 @@ async def havoc_joincourse(
 
     data = {"course_id": course_id}
     r = await client.post(
-        "/index.php?action=join_course", data=data, headers={"User-Agent": agent}
+        "/index.php?action=courses", data=data, headers={"User-Agent": agent}
     )
     assert_status_code(logger, r, 302, "Join course failed")
 
