@@ -21,7 +21,7 @@ from httpx import AsyncClient, Response
 
 from logging import LoggerAdapter
 
-from subprocess import Popen, PIPE
+from fake_useragent import UserAgent
 
 import string
 
@@ -53,6 +53,13 @@ Utility functions
 random.seed(int.from_bytes(os.urandom(16), "little"))
 alphabet = string.ascii_letters + string.digits
 
+ua = UserAgent()
+browsers = [ua.chrome, ua.firefox, ua.safari, ua.opera]
+
+
+def get_random_ua():
+    return random.choice(browsers)
+
 
 def noise(min_len: int, max_len: int):
     len = random.randint(min_len, max_len)
@@ -76,6 +83,7 @@ def assert_status_code(
             errmsg = f"{r.request.method} {r.request.url.path} failed"
         raise MumbleException(errmsg)
 
+
 def parse_soup(text: str):
     try:
         soup = BeautifulSoup(text)
@@ -86,7 +94,7 @@ def parse_soup(text: str):
 
 def parse_filename(text: str):
     try:
-        pattern = r'Name: ([\w\d_]+)'
+        pattern = r"Name: ([\w\d_]+)"
         match = re.search(pattern, text)
         if match:
             grade_name = match.group(1)
@@ -108,7 +116,7 @@ def parse_filecontent(text: str):
 
 def parse_courseid(text: str):
     try:
-        pattern = r'ID: (\d+)'
+        pattern = r"ID: (\d+)"
         match = re.search(pattern, text)
         if match:
             course_id = match.group(1)
@@ -162,7 +170,7 @@ def parse_is_joined(html_text: str, course_id: str):
 
 def parse_first_courseid(text: str):
     try:
-        soup = BeautifulSoup(text, 'html.parser')
+        soup = BeautifulSoup(text, "html.parser")
         input_tag = soup.find("input", attrs={"name": "course_id"})
         if input_tag is None:
             raise MumbleException("No Course found")
@@ -451,14 +459,17 @@ async def putnoise_db(
     client: AsyncClient,
     db: ChainDB,
 ) -> str:
+    agent = get_random_ua()
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
+    r = await client.post(
+        "/index.php?action=register", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Register failed")
 
     # parse user id
-    r = await client.get("/index.php?action=home")
+    r = await client.get("/index.php?action=home", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get home page failed")
     id_match = re.search(r'href="index\.php\?action=profile&id=(\d+)"', r.text)
     user_id = id_match.group(1)
@@ -466,7 +477,9 @@ async def putnoise_db(
     # update profile
     name, flag = noise(5, 16), noise(10, 20)
     data = {"username": username, "name": name, "flag": flag}
-    r = await client.post("/index.php?action=profile", data=data)
+    r = await client.post(
+        "/index.php?action=profile", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 200, "Update Profile failed")
 
     # create new course and become course admin
@@ -479,7 +492,9 @@ async def putnoise_db(
             "text/xml",
         ),
     }
-    r = await client.post("/index.php?action=courses", files=files)
+    r = await client.post(
+        "/index.php?action=courses", files=files, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 201, "Upload Course failed", info=data)
     course_id = parse_courseid(r.text)
 
@@ -493,22 +508,27 @@ async def getnoise_db(
     client: AsyncClient,
     db: ChainDB,
 ) -> None:
+    agent = get_random_ua()
     try:
         username, password, user_id, title, course_id, flag = await db.get("info")
     except KeyError:
         raise MumbleException("database entry missing")
 
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=login", data=data)
+    r = await client.post(
+        "/index.php?action=login", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Login failed")
 
-    r = await client.get(f"/index.php?action=profile&id={user_id}")
+    r = await client.get(
+        f"/index.php?action=profile&id={user_id}", headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 200, "Access profile failed")
 
     assert_in(flag, r.text, "Flag in Profile missing")
 
     # check if user is still course admin
-    r = await client.get("/index.php?action=courses")
+    r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     is_admin = parse_is_admin(r.text, title, course_id)
     if not is_admin:
@@ -522,10 +542,13 @@ async def putnoise_file(
     client: AsyncClient,
     db: ChainDB,
 ) -> str:
+    agent = get_random_ua()
     # register user and login
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
+    r = await client.post(
+        "/index.php?action=register", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Register failed")
 
     # create the grade file
@@ -533,7 +556,11 @@ async def putnoise_file(
     file_obj = io.BytesIO(content.encode())
 
     # post grade
-    r = await client.post("/index.php?action=grades", files={"grades": file_obj})
+    r = await client.post(
+        "/index.php?action=grades",
+        files={"grades": file_obj},
+        headers={"User-Agent": agent},
+    )
     assert_status_code(logger, r, 201, "Upload Grade failed")
     filename = parse_filename(r.text)
     if not filename:
@@ -549,16 +576,19 @@ async def getnoise_file(
     client: AsyncClient,
     db: ChainDB,
 ) -> None:
+    agent = get_random_ua()
     try:
         username, password, content = await db.get("info")
     except KeyError:
         raise MumbleException("database entry missing")
 
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=login", data=data)
+    r = await client.post(
+        "/index.php?action=login", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Login failed")
 
-    r = await client.get(f"/index.php?action=grades")
+    r = await client.get(f"/index.php?action=grades", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Access grades failed")
 
     assert_in(content, r.text, "File content missing")
@@ -568,16 +598,21 @@ async def getnoise_file(
 async def havoc_registerlogoutlogin(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
+    agent = get_random_ua()
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
+    r = await client.post(
+        "/index.php?action=register", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Register failed")
 
-    r = await client.get("/index.php?action=logout")
+    r = await client.get("/index.php?action=logout", headers={"User-Agent": agent})
     assert_status_code(logger, r, 302, "Logout failed")
 
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=login", data=data)
+    r = await client.post(
+        "/index.php?action=login", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Login failed")
 
 
@@ -585,7 +620,8 @@ async def havoc_registerlogoutlogin(
 async def havoc_aboutus(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
-    r = await client.get("/index.php?action=about_us")
+    agent = get_random_ua()
+    r = await client.get("/index.php?action=about_us", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Access about us failed")
 
 
@@ -593,12 +629,15 @@ async def havoc_aboutus(
 async def havoc_aboutmemarkdown(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
+    agent = get_random_ua()
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
+    r = await client.post(
+        "/index.php?action=register", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Register failed")
 
-    r = await client.get("/index.php?action=profile")
+    r = await client.get("/index.php?action=profile", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Access profile failed")
 
     title, p, code = noise(10, 20), noise(10, 20), noise(10, 20)
@@ -614,7 +653,9 @@ async def havoc_aboutmemarkdown(
     p_rendered = f"<p>{p}</p>"
     code_rendered = f"<pre><code>{code}</code></pre>"
     data = {"about_me": test_markdown}
-    r = await client.post("/index.php?action=profile", data=data)
+    r = await client.post(
+        "/index.php?action=profile", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 200, "Update profile failed")
 
     if not (
@@ -627,22 +668,27 @@ async def havoc_aboutmemarkdown(
 async def havoc_joincourse(
     task: HavocCheckerTaskMessage, logger: LoggerAdapter, client: AsyncClient
 ):
+    agent = get_random_ua()
     username, password = noise(10, 15), noise(16, 20)
     data = {"username": username, "password": password}
-    r = await client.post("/index.php?action=register", data=data)
+    r = await client.post(
+        "/index.php?action=register", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Register failed")
 
-    r = await client.get("/index.php?action=courses")
+    r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     course_id = parse_first_courseid(r.text)
     if not course_id:
         raise MumbleException("No course found")
 
     data = {"course_id": course_id}
-    r = await client.post("/index.php?action=join_course", data=data)
+    r = await client.post(
+        "/index.php?action=join_course", data=data, headers={"User-Agent": agent}
+    )
     assert_status_code(logger, r, 302, "Join course failed")
 
-    r = await client.get("/index.php?action=courses")
+    r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     is_joined = parse_is_joined(r.text, course_id)
     if not is_joined:

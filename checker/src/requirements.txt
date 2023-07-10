@@ -6,3 +6,4 @@ beautifulsoup4
 uvicorn
 gunicorn
 faker
+fake_useragent
