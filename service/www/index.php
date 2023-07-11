@@ -281,6 +281,18 @@ switch ($action) {
 
         $dbh = DB::getInstance();
         $message = null;
+        $records_per_page = 100;
+        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
+        $offset = ($page - 1) * $records_per_page;
+
+        // Count total records
+        $stmt_count = $dbh->prepare("SELECT COUNT(*) as total_records FROM courses WHERE is_private = 0 OR created_by = :user_id");
+        $stmt_count->bindParam(':user_id', $_SESSION['user']['id']);
+        $stmt_count->execute();
+        $total_records = $stmt_count->fetch(PDO::FETCH_ASSOC)['total_records'];
+
+        // Calculate total pages
+        $total_pages = ceil($total_records / $records_per_page);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['course_id'])) {
@@ -346,14 +358,18 @@ switch ($action) {
 
         if (isset($_GET['id'])) {
             $course_id = $_GET['id'];
-            $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id AND (is_private = 0 OR created_by = :user_id)");
+            $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id AND (is_private = 0 OR created_by = :user_id) ORDER BY id DESC LIMIT :limit OFFSET :offset");
             $stmt->bindParam(':course_id', $course_id);
             $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+            $stmt->bindParam(':limit', $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
+            $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id ORDER BY id DESC LIMIT :limit OFFSET :offset");
             $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+            $stmt->bindParam(':limit', $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -390,9 +406,7 @@ switch ($action) {
             }
         }
 
-        $courses = array_reverse($courses);
-
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'page' => $page, 'total_pages' => $total_pages]);
         break;
 
     case 'grades':
