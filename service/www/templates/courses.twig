@@ -7,7 +7,7 @@
 			<p>{{ message|raw }}</p>
 		{% endif %}
 
-		{% if user %}
+		{% if user and not course_id %}
 			<h2>Add Course</h2>
 			<form method="post" action="index.php?action=courses" enctype="multipart/form-data" class="courses-form">
 				<div class="input-field">
@@ -28,7 +28,11 @@
 			</form>
 		{% endif %}
 
-		<h2>Existing Courses</h2>
+		{% if course_id %}
+			<h2>Selected Course</h2>
+		{% else %}
+			<h2>Existing Courses</h2>
+		{% endif %}
 		<ul class="course-list">
 			{% for course in courses %}
 				<li>
@@ -71,7 +75,8 @@
 			{% endfor %}
 		</ul>
 
-		<div class="pagination-container">
+		{% if not course_id %}
+			<div class="pagination-container">
 			{% for i in 1..total_pages %}
 				{% if i == page %}
 					<span class="page-number active-page">{{ i }}</span>
@@ -80,5 +85,7 @@
 				{% endif %}
 			{% endfor %}
 		</div>
+		{% endif %}
+		
 	</div>
 {% endblock %}

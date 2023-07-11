@@ -406,7 +406,7 @@ switch ($action) {
             }
         }
 
-        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'page' => $page, 'total_pages' => $total_pages]);
+        echo $twig->render('templates/courses.twig', ['courses' => $courses, 'user' => $_SESSION['user'], 'message' => $message, 'page' => $page, 'total_pages' => $total_pages, 'course_id' => $_GET['id'] ?? null]);
         break;
 
     case 'grades':
