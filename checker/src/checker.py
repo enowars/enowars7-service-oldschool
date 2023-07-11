@@ -277,7 +277,7 @@ async def getflag_db(
     assert_in(task.flag, r.text, "Flag missing")
 
     # check if user is still course admin
-    r = await client.get("/index.php?action=courses")
+    r = await client.get(f"/index.php?action=courses&id={course_id}")
     assert_status_code(logger, r, 200, "Get courses failed")
     is_admin = parse_is_admin(r.text, title, course_id)
     if not is_admin:
@@ -528,7 +528,7 @@ async def getnoise_db(
     assert_in(flag, r.text, "Flag in Profile missing")
 
     # check if user is still course admin
-    r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
+    r = await client.get(f"/index.php?action=courses&id={course_id}", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     is_admin = parse_is_admin(r.text, title, course_id)
     if not is_admin:
@@ -688,7 +688,7 @@ async def havoc_joincourse(
     )
     assert_status_code(logger, r, 200, "Join course failed")
 
-    r = await client.get("/index.php?action=courses", headers={"User-Agent": agent})
+    r = await client.get(f"/index.php?action=courses&id={course_id}", headers={"User-Agent": agent})
     assert_status_code(logger, r, 200, "Get courses failed")
     is_joined = parse_is_joined(r.text, course_id)
     if not is_joined:

@@ -344,10 +344,19 @@ switch ($action) {
             }
         }
 
-        $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
-        $stmt->bindParam(':user_id', $_SESSION['user']['id']);
-        $stmt->execute();
-        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (isset($_GET['id'])) {
+            $course_id = $_GET['id'];
+            $stmt = $dbh->prepare("SELECT * FROM courses WHERE id = :course_id AND (is_private = 0 OR created_by = :user_id)");
+            $stmt->bindParam(':course_id', $course_id);
+            $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+            $stmt->execute();
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $stmt = $dbh->prepare("SELECT * FROM courses WHERE is_private = 0 OR created_by = :user_id");
+            $stmt->bindParam(':user_id', $_SESSION['user']['id']);
+            $stmt->execute();
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         $course_ids = array_column($courses, 'id');
 
