@@ -33,9 +33,11 @@
 			{% for course in courses %}
 				<li>
 					<div class="course-item">
-						<h3>{{ course.title }}
+						<h3>
+							<a href="index.php?action=courses&id={{ course.id }}">{{ course.title }}</a>
 							(ID:
-							{{ course.id }})</h3>
+							{{ course.id }})
+						</h3>
 
 						{% if user.admin_of == course.id or course.user_enrolled %}
 							<div class="course-data">{{ course.course_data|raw }}</div>
@@ -68,12 +70,15 @@
 				</li>
 			{% endfor %}
 		</ul>
-		{% for i in 1..total_pages %}
-			{% if i == page %}
-				<span>{{ i }}</span>
-			{% else %}
-				<a href="?action=courses&page={{ i }}">{{ i }}</a>
-			{% endif %}
-		{% endfor %}
+
+		<div class="pagination-container">
+			{% for i in 1..total_pages %}
+				{% if i == page %}
+					<span class="page-number active-page">{{ i }}</span>
+				{% else %}
+					<a class="page-number" href="?action=courses&page={{ i }}">{{ i }}</a>
+				{% endif %}
+			{% endfor %}
+		</div>
 	</div>
 {% endblock %}

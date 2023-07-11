@@ -118,3 +118,41 @@ body {
   margin-top: 10px;
   display: inline-block;
 }
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-number {
+  background-color: #008080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  padding: 5px 10px;
+  margin-right: 5px;
+  text-decoration: none;
+  font-family: "Courier New", Courier, monospace;
+  transition: all 0.3s ease-in-out;
+}
+
+.page-number:hover {
+  background-color: #000080;
+  border: 1px solid #ffffff;
+}
+
+.active-page {
+  background-color: #000080;
+  border: 1px solid #ffffff;
+  padding: 5px 10px;
+  margin-right: 5px;
+}
+
+h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h3 a:hover {
+  color: inherit;
+}
