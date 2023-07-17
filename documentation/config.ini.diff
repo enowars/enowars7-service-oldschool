@@ -1,0 +1,14 @@
+ [xml]
+-mode = 67846 ; LIBXML_NONET, LIBXML_DTDLOAD, LIBXML_COMPACT, LIBXML_NOBLANKS
++mode = 67844 ; LIBXML_NONET, LIBXML_DTDLOAD, LIBXML_COMPACT, LIBXML_NOBLANKS
+ 
+ [sandbox]
+-allowed_tags = "if,else,for,block,include,set"
++allowed_tags = "if,else,for,block"
+ allowed_filters = "escape,markdown,raw"
+ allowed_methods = "get,set"
+ allowed_properties = "title,content"
+-allowed_functions = "range,constant,source"
+\ No newline at end of file
++allowed_functions = "range,constant"
+\ No newline at end of file
