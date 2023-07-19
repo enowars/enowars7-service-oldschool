@@ -77,15 +77,30 @@
 
 		{% if not course_id %}
 			<div class="pagination-container">
-			{% for i in 1..total_pages %}
-				{% if i == page %}
-					<span class="page-number active-page">{{ i }}</span>
-				{% else %}
-					<a class="page-number" href="?action=courses&page={{ i }}">{{ i }}</a>
+				{% set visible_pages_limit = 5 %}
+				{% set prev_page = page - 1 %}
+				{% set next_page = page + 1 %}
+
+				{% if prev_page >= 1 %}
+					<a class="page-number" href="?action=courses&page={{ prev_page }}"><</a>
 				{% endif %}
-			{% endfor %}
-		</div>
+
+				{% for i in 1..total_pages %}
+					{% if i >= page - visible_pages_limit//2 and i <= page + visible_pages_limit//2 %}
+						{% if i == page %}
+							<span class="page-number active-page">{{ i }}</span>
+						{% else %}
+							<a class="page-number" href="?action=courses&page={{ i }}">{{ i }}</a>
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+
+				{% if next_page <= total_pages %}
+					<a class="page-number" href="?action=courses&page={{ next_page }}">></a>
+				{% endif %}
+			</div>
 		{% endif %}
-		
+
+
 	</div>
 {% endblock %}

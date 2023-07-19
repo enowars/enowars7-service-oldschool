@@ -281,17 +281,15 @@ switch ($action) {
 
         $dbh = DB::getInstance();
         $message = null;
-        $records_per_page = 100;
+        $records_per_page = 30;
         $page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
         $offset = ($page - 1) * $records_per_page;
 
-        // Count total records
         $stmt_count = $dbh->prepare("SELECT COUNT(*) as total_records FROM courses WHERE is_private = 0 OR created_by = :user_id");
         $stmt_count->bindParam(':user_id', $_SESSION['user']['id']);
         $stmt_count->execute();
         $total_records = $stmt_count->fetch(PDO::FETCH_ASSOC)['total_records'];
 
-        // Calculate total pages
         $total_pages = ceil($total_records / $records_per_page);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
