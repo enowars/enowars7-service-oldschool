@@ -282,7 +282,7 @@ switch ($action) {
         $dbh = DB::getInstance();
         $message = null;
         $records_per_page = 30;
-        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
+        $page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] >= 1 ? $_GET['page'] : 1;
         $offset = ($page - 1) * $records_per_page;
 
         $stmt_count = $dbh->prepare("SELECT COUNT(*) as total_records FROM courses WHERE is_private = 0 OR created_by = :user_id");
