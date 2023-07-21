@@ -86,7 +86,7 @@
 				{% endif %}
 
 				{% for i in 1..total_pages %}
-					{% if i >= page - visible_pages_limit//2 and i <= page + visible_pages_limit//2 %}
+					{% if i >= page - visible_pages_limit//2 and i <= page + visible_pages_limit//2 and not i == 0%}
 						{% if i == page %}
 							<span class="page-number active-page">{{ i }}</span>
 						{% else %}
