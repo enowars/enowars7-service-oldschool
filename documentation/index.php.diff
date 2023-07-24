@@ -1,11 +1,16 @@
+         if (!$first) {
+             $sql .= ', ';
+         } else {
+             $first = false;
          }
+-        $sql .= $key . ' = :' . $key;
+-        $params[':' . $key] = $value;
++        if ($key == 'username' || $key == 'password' || $key == 'name' || $key == 'flag' || $key == 'about_me') {
++            $sql .= $key . ' = :' . $key;
++            $params[':' . $key] = $value;
++        }
+     }
  
-         if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['user']['id'] == $profile_user['id']) {
-             unset($_POST['id']);
-             unset($_POST['submit']);
-+            unset($_POST['admin_of']);
- 
-             try {
-                 updateProfile($_SESSION['user']['id'], $_POST);
-                 $stmt = $dbh->prepare("SELECT * FROM users WHERE id = :id");
-                 $stmt->bindParam(":id", $_SESSION['user']['id'], PDO::PARAM_INT);
+     $sql .= ' WHERE id = :userId';
+     $params[':userId'] = $userId;
+     if (isset($params[':password']) && $params[':password'] != '') {
